@@ -9,6 +9,12 @@ type SelectionStatusLoadedAction = {
   files: File[];
 };
 
+type SelectionStatusArchiveAction = {
+  type: "ARCHIVE";
+  archiveId: number;
+};
+
 type SelectionStatusAction =
   | SelectionStatusSetMarkedAction
-  | SelectionStatusLoadedAction;
+  | SelectionStatusLoadedAction
+  | SelectionStatusArchiveAction;
