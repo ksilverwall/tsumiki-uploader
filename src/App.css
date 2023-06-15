@@ -1,8 +1,29 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100vw;
+  height: 100vh;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.body-container {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.sidebar {
+  margin: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-contents {
+  flex: 1;
+}
+
+.main-section {
+  flex: 1;
 }
 
 .gallery-view {

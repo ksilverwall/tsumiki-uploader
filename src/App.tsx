@@ -22,44 +22,63 @@ function App() {
     [status]
   );
 
-  return (
-    <div>
-      <div className="gallery-view">
-        {status.items.length > 0 ? (
-          <>
-            {status.items
-              .filter((item) => item.archiveiId === undefined)
-              .map((item, idx) => (
-                <div key={idx} onClick={() => onSelect(item.id)}>
-                  <ImagePreview file={item.file} marked={item.marked} />
-                </div>
-              ))}
-          </>
-        ) : (
-          <FileLoader onLoaded={(files) => dispatch({ type: "LOAD", files })} />
-        )}
-      </div>
-      <div>
-        <button
-          onClick={() => {
-            dispatch({ type: "ARCHIVE" });
-          }}
-        >
-          Archive
-        </button>
-      </div>
-      <div>
-        {[
-          ...new Set(
-            status.items
-              .map((item) => item.archiveiId)
-              .filter((v) => v !== undefined)
-          ),
-        ].sort().map((v) => (
+  const archiveButton = (
+    <button
+      onClick={() => {
+        dispatch({ type: "ARCHIVE" });
+      }}
+    >
+      Archive
+    </button>
+  );
+
+  const groupButtons = (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      {[
+        ...new Set(
+          status.items
+            .map((item) => item.archiveiId)
+            .filter((v) => v !== undefined)
+        ),
+      ]
+        .sort()
+        .map((v) => (
           <button>{v}</button>
         ))}
-      </div>
     </div>
+  );
+
+  const galleryView = (
+    <div className="gallery-view">
+      {status.items.length > 0 ? (
+        <>
+          {status.items
+            .filter((item) => item.archiveiId === undefined)
+            .map((item, idx) => (
+              <div key={idx} onClick={() => onSelect(item.id)}>
+                <ImagePreview file={item.file} marked={item.marked} />
+              </div>
+            ))}
+        </>
+      ) : (
+        <FileLoader onLoaded={(files) => dispatch({ type: "LOAD", files })} />
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <header>
+        <p>Tsumiki Uploader</p>
+      </header>
+      <div className="body-container">
+        <aside className="sidebar">
+          <div className="sidebar-contents">{groupButtons}</div>
+          <div>{archiveButton}</div>
+        </aside>
+        <section className="main-section">{galleryView}</section>
+      </div>
+    </>
   );
 }
 
