@@ -1,75 +1,48 @@
-import { useCallback, useReducer, useState } from "react";
+import { useCallback, useReducer } from "react";
 import ImagePreview from "./ImagePreview";
 import FileLoader from "./FileLoader";
 import "./App.css";
-
-const SelectionStatusReducer = (
-  state: SelectionStatus[],
-  action: SelectionStatusAction
-): SelectionStatus[] => {
-  switch (action.type) {
-    case "SET_MARKED":
-      return state.map((v, i) =>
-        i === action.index
-          ? {
-              ...state[action.index],
-              marked: action.value,
-            }
-          : v
-      );
-    case "LOADED":
-      return [
-        ...state,
-        ...action.files.map((f) => ({ file: f, marked: false })),
-      ];
-    case "ARCHIVE":
-      return state.map((s) =>
-        s.marked ? { ...s, status: false, archiveiId: action.archiveId } : s
-      );
-    default:
-      return state;
-  }
-};
+import reducer from "./reducer";
 
 function App() {
-  const [currentArchiveId, setCurrentArchiveId] = useState<number>(0);
-  const [selectionStatus, dispatch] = useReducer(SelectionStatusReducer, []);
+  const [status, dispatch] = useReducer(reducer, {
+    nextArchiveId: 0,
+    nextItemId: 0,
+    items: [],
+  });
 
   const onSelect = useCallback(
     (index: number) => {
       dispatch({
-        type: "SET_MARKED",
+        type: "MARK_ITEM",
         index: index,
-        value: !selectionStatus[index].marked,
+        value: !status.items[index].marked,
       });
     },
-    [selectionStatus]
+    [status]
   );
 
   return (
     <div>
       <div className="gallery-view">
-        {selectionStatus.length > 0 ? (
+        {status.items.length > 0 ? (
           <>
-            {selectionStatus.map((status, index) =>
-              status.archiveiId === undefined ? (
-                <div key={index} onClick={() => onSelect(index)}>
-                  <ImagePreview file={status.file} marked={status.marked} />
+            {status.items
+              .filter((item) => item.archiveiId === undefined)
+              .map((item, idx) => (
+                <div key={idx} onClick={() => onSelect(item.id)}>
+                  <ImagePreview file={item.file} marked={item.marked} />
                 </div>
-              ) : null
-            )}
+              ))}
           </>
         ) : (
-          <FileLoader
-            onLoaded={(files) => dispatch({ type: "LOADED", files })}
-          />
+          <FileLoader onLoaded={(files) => dispatch({ type: "LOAD", files })} />
         )}
       </div>
       <div>
         <button
           onClick={() => {
-            dispatch({ type: "ARCHIVE", archiveId: currentArchiveId });
-            setCurrentArchiveId(currentArchiveId + 1);
+            dispatch({ type: "ARCHIVE" });
           }}
         >
           Archive

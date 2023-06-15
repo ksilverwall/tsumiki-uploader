@@ -1,20 +1,19 @@
-type SelectionStatusSetMarkedAction = {
-  type: "SET_MARKED";
+type MarkItemAction = {
+  type: "MARK_ITEM";
   index: number;
   value: boolean;
 };
 
-type SelectionStatusLoadedAction = {
-  type: "LOADED";
+type LoadAction = {
+  type: "LOAD";
   files: File[];
 };
 
-type SelectionStatusArchiveAction = {
+type ArchiveAction = {
   type: "ARCHIVE";
-  archiveId: number;
 };
 
-type SelectionStatusAction =
-  | SelectionStatusSetMarkedAction
-  | SelectionStatusLoadedAction
-  | SelectionStatusArchiveAction;
+type Action =
+  | MarkItemAction
+  | LoadAction
+  | ArchiveAction;
