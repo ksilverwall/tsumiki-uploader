@@ -48,6 +48,17 @@ function App() {
           Archive
         </button>
       </div>
+      <div>
+        {[
+          ...new Set(
+            status.items
+              .map((item) => item.archiveiId)
+              .filter((v) => v !== undefined)
+          ),
+        ].sort().map((v) => (
+          <button>{v}</button>
+        ))}
+      </div>
     </div>
   );
 }
