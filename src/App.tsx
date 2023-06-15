@@ -1,10 +1,12 @@
 import { useCallback, useReducer } from "react";
+import { useNavigate } from "react-router-dom";
 import ImagePreview from "./ImagePreview";
 import FileLoader from "./FileLoader";
-import "./App.css";
 import reducer from "./reducer";
+import "./App.css";
 
 function App() {
+  const navigate = useNavigate();
   const [status, dispatch] = useReducer(reducer, {
     nextArchiveId: 0,
     nextItemId: 0,
@@ -43,7 +45,7 @@ function App() {
       ]
         .sort()
         .map((v) => (
-          <button>{v}</button>
+          <button onClick={() => navigate(`?group=${v}`)}>{v}</button>
         ))}
     </div>
   );
