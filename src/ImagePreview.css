@@ -8,3 +8,8 @@
   height: 100%;
   object-fit: contain;
 }
+
+.image-preview-marked {
+  border: solid;
+  border-color: red;
+}
