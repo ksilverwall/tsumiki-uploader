@@ -1,5 +1,5 @@
-import { useCallback, useReducer } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useReducer, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import ImagePreview from "./ImagePreview";
 import FileLoader from "./FileLoader";
 import reducer from "./reducer";
@@ -7,11 +7,21 @@ import "./App.css";
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [groupView, setGroupView] = useState<number>();
   const [status, dispatch] = useReducer(reducer, {
     nextArchiveId: 0,
     nextItemId: 0,
     items: [],
   });
+
+  useEffect(() => {
+    const dict = Object.fromEntries(
+      new URLSearchParams(location.search).entries()
+    );
+    setGroupView(dict["group"] ? parseInt(dict["group"]) : undefined);
+  }, [location.search]);
 
   const onSelect = useCallback(
     (index: number) => {
@@ -52,19 +62,22 @@ function App() {
 
   const galleryView = (
     <div className="gallery-view">
-      {status.items.length > 0 ? (
-        <>
-          {status.items
-            .filter((item) => item.archiveiId === undefined)
-            .map((item, idx) => (
-              <div key={idx} onClick={() => onSelect(item.id)}>
-                <ImagePreview file={item.file} marked={item.marked} />
-              </div>
-            ))}
-        </>
-      ) : (
-        <FileLoader onLoaded={(files) => dispatch({ type: "LOAD", files })} />
-      )}
+      <p>{groupView}</p>
+      <div className="image-list">
+        {status.items.length > 0 ? (
+          <>
+            {status.items
+              .filter((item) => item.archiveiId === groupView)
+              .map((item, idx) => (
+                <div key={idx} onClick={() => onSelect(item.id)}>
+                  <ImagePreview file={item.file} marked={item.marked} />
+                </div>
+              ))}
+          </>
+        ) : (
+          <FileLoader onLoaded={(files) => dispatch({ type: "LOAD", files })} />
+        )}
+      </div>
     </div>
   );
 
