@@ -41,7 +41,6 @@ const StatusReducer = (state: Status, action: Action): Status => {
     case "LOAD":
       return {
         ...state,
-        nextItemId: state.nextArchiveId + action.items.length,
         groups: {
           ...state.groups,
           [action.groupId]: {
@@ -82,13 +81,12 @@ const StatusReducer = (state: Status, action: Action): Status => {
       });
       return {
         ...state,
-        nextArchiveId: state.nextArchiveId + 1,
         groups: {
           ...state.groups,
           [action.groupId]: {
             items: least,
           },
-          [state.nextArchiveId.toString()]: {
+          [action.newGroupId]: {
             items: marked,
           },
         },

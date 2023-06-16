@@ -18,8 +18,6 @@ function App() {
 
   const [groupView, setGroupView] = useState<string>(DEFAULT_GROUP_ID);
   const [status, dispatch] = useReducer(reducer, {
-    nextArchiveId: 0,
-    nextItemId: 0,
     groups: {
       [DEFAULT_GROUP_ID]: { items: {} },
     },
@@ -47,7 +45,11 @@ function App() {
   const archiveButton = (
     <button
       onClick={() => {
-        dispatch({ type: "ARCHIVE", groupId: groupView });
+        dispatch({
+          type: "ARCHIVE",
+          newGroupId: generateId<GroupId>(),
+          groupId: groupView,
+        });
       }}
     >
       Archive

@@ -11,7 +11,5 @@ type Group = {
 };
 
 type Status = {
-  nextArchiveId: number;
-  nextItemId: number;
   groups: { [key: GroupId]: Group };
 };

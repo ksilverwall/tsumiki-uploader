@@ -13,6 +13,7 @@ type LoadAction = {
 
 type ArchiveAction = {
   type: "ARCHIVE";
+  newGroupId: GroupId;
   groupId: GroupId;
 };
 
