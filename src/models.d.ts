@@ -1,13 +1,15 @@
 type GroupId = string;
 type ItemId = string;
 
+type GroupState = "EDITING" | "ARCHIVING" | "COMPLETE";
+
 type Item = {
   file: File;
 };
 
 type Group = {
   label: string;
-  state: 'EDITING' | 'ARCHIVING' | 'COMPLETE';
+  state: GroupState;
   items: { [key: ItemId]: Item };
 };
 

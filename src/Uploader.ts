@@ -10,22 +10,18 @@ class ZipUploader {
 
 class Uploader {
   async upload(files: File[]) {
-    try {
-      const zip = new JSZip();
+    const zip = new JSZip();
 
-      files.forEach((file) => {
-        zip.file(file.name, file);
-      });
+    files.forEach((file) => {
+      zip.file(file.name, file);
+    });
 
-      const content = await zip.generateAsync({ type: "blob" });
+    const content = await zip.generateAsync({ type: "blob" });
 
-      const formData = new FormData();
-      formData.append("file", content, "archive.zip");
+    const formData = new FormData();
+    formData.append("file", content, "archive.zip");
 
-      return new ZipUploader().upload(formData);
-    } catch (err) {
-      console.error("Failed to generate ZIP file:", err);
-    }
+    return new ZipUploader().upload(formData);
   }
 }
 

@@ -17,6 +17,9 @@ function App() {
 
   const DEFAULT_GROUP_ID = useMemo(() => generateId<GroupId>(), []);
 
+  const [promisePool, setPromisePool] = useState<
+    { pid: string; promise: Promise<void> }[]
+  >([]);
   const [viewGroupId, setViewGroupId] = useState<string>(DEFAULT_GROUP_ID);
   const [status, dispatch] = useReducer(reducer, {
     groups: {
@@ -72,14 +75,31 @@ function App() {
         const files = Object.values(status.groups[groupId].items).map(
           (item) => item.file
         );
-        return { groupId, promise: new Uploader().upload(files) };
+
+        const pid = uuidv7();
+
+        return {
+          pid,
+          promise: (async () => {
+            try {
+              const key = await new Uploader().upload(files);
+              dispatch({
+                type: "UPLOAD_COMPLETE",
+                groupId: groupId,
+                key,
+              });
+            } catch (err) {
+              // TODO: Store error
+              console.log(err);
+            }
+
+            setPromisePool(promisePool.filter((v) => v.pid !== pid));
+          })(),
+        };
       });
-    dispatch({
-      type: "UPLOAD",
-      promises: Object.fromEntries(
-        promiseList.map(({ groupId, promise }) => [groupId, promise])
-      ),
-    });
+
+    setPromisePool(promisePool.concat(promiseList));
+    dispatch({ type: "UPLOAD" });
   };
 
   const groupButtons = (

@@ -12,13 +12,18 @@ function mapDict<S>(
   );
 }
 
-const GroupReducer: Reducer<Group, GroupAction> = (state, action) => {
+const GroupReducer: Reducer<Group, Action> = (state, action) => {
   switch (action.type) {
     case "UPLOAD":
       return {
         ...state,
         state: "ARCHIVING",
-        promise: action.promise,
+      };
+    case "UPLOAD_COMPLETE":
+      return {
+        ...state,
+        state: "COMPLETE",
+        key: action.key,
       };
     default:
       return state;
@@ -97,8 +102,14 @@ const StatusReducer: Reducer<Status, Action> = (state, action) => {
         groups: mapDict(state.groups, (groupId, group) =>
           GroupReducer(group, {
             type: "UPLOAD",
-            promise: action.promises[groupId],
           })
+        ),
+      };
+    case "UPLOAD_COMPLETE":
+      return {
+        ...state,
+        groups: mapDict(state.groups, (_, group) =>
+          GroupReducer(group, action)
         ),
       };
     default:
