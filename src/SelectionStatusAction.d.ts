@@ -1,14 +1,14 @@
 type MarkItemAction = {
   type: "MARK_ITEM";
   groupId: GroupId;
-  index: number;
+  itemId: ItemId;
   value: boolean;
 };
 
 type LoadAction = {
   type: "LOAD";
   groupId: GroupId;
-  files: File[];
+  items: { id: ItemId; file: File}[];
 };
 
 type ArchiveAction = {

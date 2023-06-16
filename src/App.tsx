@@ -21,7 +21,7 @@ function App() {
     nextArchiveId: 0,
     nextItemId: 0,
     groups: {
-      [DEFAULT_GROUP_ID]: { items: [] },
+      [DEFAULT_GROUP_ID]: { items: {} },
     },
   });
 
@@ -33,12 +33,12 @@ function App() {
   }, [location.search]);
 
   const onSelect = useCallback(
-    (index: number) => {
+    (id: ItemId) => {
       dispatch({
         type: "MARK_ITEM",
         groupId: groupView,
-        index: index,
-        value: !status.groups[groupView].items[index].marked,
+        itemId: id,
+        value: !status.groups[groupView].items[id].marked,
       });
     },
     [status, groupView]
@@ -56,9 +56,11 @@ function App() {
 
   const groupButtons = (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      {Object.keys(status.groups).sort().map((v) => (
-        <button onClick={() => navigate(`?group=${v}`)}>{v}</button>
-      ))}
+      {Object.keys(status.groups)
+        .sort()
+        .map((v) => (
+          <button onClick={() => navigate(`?group=${v}`)}>{v}</button>
+        ))}
       <button
         onClick={() =>
           dispatch({ type: "CREATE_GROUP", newGroupId: generateId() })
@@ -69,27 +71,37 @@ function App() {
     </div>
   );
 
-  const renderItems = status.groups[groupView].items;
-
   const loaderPanel = (
     <FileLoader
       onLoaded={(files) =>
-        dispatch({ type: "LOAD", groupId: groupView, files })
+        dispatch({
+          type: "LOAD",
+          groupId: groupView,
+          items: files.map((f) => ({
+            id: generateId<ItemId>(),
+            file: f,
+          })),
+        })
       }
     />
   );
 
-  const imagePanels = renderItems.map((item, idx) => (
-    <div key={idx} onClick={() => onSelect(item.id)}>
-      <ImagePreview file={item.file} marked={item.marked} />
-    </div>
-  ));
+  const imagePanels = Object.keys(status.groups[groupView].items).map(
+    (key, idx) => (
+      <div key={idx} onClick={() => onSelect(key)}>
+        <ImagePreview
+          file={status.groups[groupView].items[key].file}
+          marked={status.groups[groupView].items[key].marked}
+        />
+      </div>
+    )
+  );
 
   const galleryView = (
     <div className="gallery-view">
       <p>{groupView}</p>
       <div className="image-list">
-        {status.groups[groupView].items.length > 0 ? (
+        {Object.keys(status.groups[groupView].items).length > 0 ? (
           <>
             <div>{loaderPanel}</div>
             {imagePanels.map((p) => (

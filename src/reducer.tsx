@@ -14,9 +14,10 @@ const StatusGroupReducer = (state: Group, action: Action): Group => {
   switch (action.type) {
     case "MARK_ITEM":
       return {
-        items: state.items.map((v, i) =>
-          i === action.index ? ItemReducer(v, action) : v
-        ),
+        items: {
+          ...state.items,
+          [action.itemId]: ItemReducer(state.items[action.itemId], action),
+        },
       };
     case "LOAD":
     default:
@@ -40,18 +41,22 @@ const StatusReducer = (state: Status, action: Action): Status => {
     case "LOAD":
       return {
         ...state,
-        nextItemId: state.nextArchiveId + action.files.length,
+        nextItemId: state.nextArchiveId + action.items.length,
         groups: {
           ...state.groups,
           [action.groupId]: {
-            items: [
+            items: {
               ...state.groups[action.groupId].items,
-              ...action.files.map((f, i) => ({
-                id: state.nextArchiveId + i,
-                file: f,
-                marked: false,
-              })),
-            ],
+              ...Object.fromEntries(
+                action.items.map((item) => [
+                  item.id,
+                  {
+                    file: item.file,
+                    marked: false,
+                  },
+                ])
+              ),
+            },
           },
         },
       };
@@ -61,24 +66,34 @@ const StatusReducer = (state: Status, action: Action): Status => {
         groups: {
           ...state.groups,
           [action.newGroupId]: {
-            items: [],
+            items: {},
           },
-        }
+        },
       };
-    case "ARCHIVE":
+    case "ARCHIVE": {
+      const marked: any = {};
+      const least: any = {};
+      Object.keys(state.groups[action.groupId].items).forEach((key) => {
+        if (state.groups[action.groupId].items[key].marked) {
+          marked[key] = state.groups[action.groupId].items[key];
+        } else {
+          least[key] = state.groups[action.groupId].items[key];
+        }
+      });
       return {
         ...state,
         nextArchiveId: state.nextArchiveId + 1,
         groups: {
           ...state.groups,
-          [state.nextArchiveId.toString()]: {
-            items: state.groups[action.groupId].items.filter((s) => s.marked),
-          },
           [action.groupId]: {
-            items: state.groups[action.groupId].items.filter((s) => !s.marked),
+            items: least,
+          },
+          [state.nextArchiveId.toString()]: {
+            items: marked,
           },
         },
       };
+    }
     default:
       return state;
   }
