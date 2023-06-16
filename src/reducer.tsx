@@ -29,6 +29,7 @@ const StatusReducer = (state: Status, action: Action): Status => {
             id: state.nextArchiveId + i,
             file: f,
             marked: false,
+            archiveId: 0,
           })),
         ],
       };

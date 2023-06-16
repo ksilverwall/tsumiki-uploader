@@ -8,8 +8,9 @@ import "./App.css";
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const DEFAULT_GROUP_ID = 0;
 
-  const [groupView, setGroupView] = useState<number>();
+  const [groupView, setGroupView] = useState<number>(DEFAULT_GROUP_ID);
   const [status, dispatch] = useReducer(reducer, {
     nextArchiveId: 0,
     nextItemId: 0,
@@ -20,7 +21,7 @@ function App() {
     const dict = Object.fromEntries(
       new URLSearchParams(location.search).entries()
     );
-    setGroupView(dict["group"] ? parseInt(dict["group"]) : undefined);
+    setGroupView(dict["group"] ? parseInt(dict["group"]) : DEFAULT_GROUP_ID);
   }, [location.search]);
 
   const onSelect = useCallback(
