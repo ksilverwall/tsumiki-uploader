@@ -55,6 +55,16 @@ const StatusReducer = (state: Status, action: Action): Status => {
           },
         },
       };
+    case "CREATE_GROUP":
+      return {
+        ...state,
+        groups: {
+          ...state.groups,
+          [action.newGroupId]: {
+            items: [],
+          },
+        }
+      };
     case "ARCHIVE":
       return {
         ...state,

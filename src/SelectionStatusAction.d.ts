@@ -16,7 +16,9 @@ type ArchiveAction = {
   groupId: GroupId;
 };
 
-type Action =
-  | MarkItemAction
-  | LoadAction
-  | ArchiveAction;
+type CreateGroupAction = {
+  type: "CREATE_GROUP";
+  newGroupId: GroupId;
+};
+
+type Action = MarkItemAction | LoadAction | ArchiveAction | CreateGroupAction;

@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { uuidv7 } from "uuidv7";
 import ImagePreview from "./ImagePreview";
 import FileLoader from "./FileLoader";
 import reducer from "./reducer";
 import "./App.css";
+
+function generateId<T extends string>(): T {
+  const newId = uuidv7();
+  return newId as T;
+}
 
 function App() {
   const navigate = useNavigate();
@@ -15,7 +21,7 @@ function App() {
     nextArchiveId: 0,
     nextItemId: 0,
     groups: {
-      [DEFAULT_GROUP_ID]: {items: []},
+      [DEFAULT_GROUP_ID]: { items: [] },
     },
   });
 
@@ -50,9 +56,16 @@ function App() {
 
   const groupButtons = (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      {[Object.keys(status.groups)].sort().map((v) => (
+      {Object.keys(status.groups).sort().map((v) => (
         <button onClick={() => navigate(`?group=${v}`)}>{v}</button>
       ))}
+      <button
+        onClick={() =>
+          dispatch({ type: "CREATE_GROUP", newGroupId: generateId() })
+        }
+      >
+        +
+      </button>
     </div>
   );
 
