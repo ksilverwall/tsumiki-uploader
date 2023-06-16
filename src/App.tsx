@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { redirect, useLocation, useNavigate } from "react-router-dom";
 import { uuidv7 } from "uuidv7";
 import ImagePreview from "./ImagePreview";
 import FileLoader from "./FileLoader";
@@ -42,6 +42,12 @@ function App() {
     [status, groupView]
   );
 
+  if (!status.groups[groupView]) {
+    // FIXME: change url
+    setGroupView(DEFAULT_GROUP_ID);
+    return <p>Invalid GroupId</p>
+  }
+    
   const newGroupButton = (
     <button
       onClick={() => {
