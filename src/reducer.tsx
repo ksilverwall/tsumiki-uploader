@@ -96,13 +96,16 @@ const StatusReducer: Reducer<Status, Action> = (state, action) => {
         groups: { ...state.groups, ...groups },
       };
     }
-    case "UPLOAD":
+    case "UPLOAD_MANY":
       return {
         ...state,
         groups: mapDict(state.groups, (groupId, group) =>
-          GroupReducer(group, {
-            type: "UPLOAD",
-          })
+          action.groupIds.includes(groupId)
+            ? GroupReducer(group, {
+                type: "UPLOAD",
+                groupId,
+              })
+            : group
         ),
       };
     case "UPLOAD_COMPLETE":

@@ -66,40 +66,40 @@ function App() {
   );
 
   const onArchiveAll = () => {
-    const promiseList = Object.keys(status.groups)
-      .filter((groupId) => {
-        const g = status.groups[groupId];
-        return g.state === "EDITING" && Object.keys(g.items).length > 0;
-      })
-      .map((groupId) => {
-        const files = Object.values(status.groups[groupId].items).map(
-          (item) => item.file
-        );
+    const targetGroupIds = Object.keys(status.groups).filter((groupId) => {
+      const g = status.groups[groupId];
+      return g.state === "EDITING" && Object.keys(g.items).length > 0;
+    });
 
-        const pid = uuidv7();
+    const promiseList = targetGroupIds.map((groupId) => {
+      const files = Object.values(status.groups[groupId].items).map(
+        (item) => item.file
+      );
 
-        return {
-          pid,
-          promise: (async () => {
-            try {
-              const key = await new Uploader().upload(files);
-              dispatch({
-                type: "UPLOAD_COMPLETE",
-                groupId: groupId,
-                key,
-              });
-            } catch (err) {
-              // TODO: Store error
-              console.log(err);
-            }
+      const pid = uuidv7();
 
-            setPromisePool(promisePool.filter((v) => v.pid !== pid));
-          })(),
-        };
-      });
+      return {
+        pid,
+        promise: (async () => {
+          try {
+            const key = await new Uploader().upload(files);
+            dispatch({
+              type: "UPLOAD_COMPLETE",
+              groupId: groupId,
+              key,
+            });
+          } catch (err) {
+            // TODO: Store error
+            console.log(err);
+          }
+
+          setPromisePool(promisePool.filter((v) => v.pid !== pid));
+        })(),
+      };
+    });
 
     setPromisePool(promisePool.concat(promiseList));
-    dispatch({ type: "UPLOAD" });
+    dispatch({ type: "UPLOAD_MANY", groupIds: targetGroupIds });
   };
 
   const groupButtons = (
