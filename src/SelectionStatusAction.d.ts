@@ -1,20 +1,16 @@
-type MarkItemAction = {
-  type: "MARK_ITEM";
-  groupId: GroupId;
-  itemId: ItemId;
-  value: boolean;
-};
-
 type LoadAction = {
   type: "LOAD";
   groupId: GroupId;
-  items: { id: ItemId; file: File}[];
+  items: { id: ItemId; file: File }[];
 };
 
 type ArchiveAction = {
   type: "ARCHIVE";
   newGroupId: GroupId;
   groupId: GroupId;
+  source: {
+    selected: ItemId[];
+  };
 };
 
 type CreateGroupAction = {
@@ -22,4 +18,4 @@ type CreateGroupAction = {
   newGroupId: GroupId;
 };
 
-type Action = MarkItemAction | LoadAction | ArchiveAction | CreateGroupAction;
+type Action = LoadAction | ArchiveAction | CreateGroupAction;

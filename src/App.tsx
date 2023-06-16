@@ -17,6 +17,7 @@ function App() {
   const DEFAULT_GROUP_ID = "0";
 
   const [groupView, setGroupView] = useState<string>(DEFAULT_GROUP_ID);
+  const [selectedItems, setSelectedItems] = useState<ItemId[]>([]);
   const [status, dispatch] = useReducer(reducer, {
     groups: {
       [DEFAULT_GROUP_ID]: { items: {} },
@@ -30,24 +31,27 @@ function App() {
     setGroupView(dict["group"] ?? DEFAULT_GROUP_ID);
   }, [location.search]);
 
+  useEffect(() => {
+    setSelectedItems([]);
+  }, [groupView]);
+
   const onSelect = useCallback(
     (id: ItemId) => {
-      dispatch({
-        type: "MARK_ITEM",
-        groupId: groupView,
-        itemId: id,
-        value: !status.groups[groupView].items[id].marked,
-      });
+      if (selectedItems.includes(id)) {
+        setSelectedItems(selectedItems.filter((v) => v !== id));
+      } else {
+        setSelectedItems(selectedItems.concat(id));
+      }
     },
-    [status, groupView]
+    [selectedItems]
   );
 
   if (!status.groups[groupView]) {
     // FIXME: change url
     setGroupView(DEFAULT_GROUP_ID);
-    return <p>Invalid GroupId</p>
+    return <p>Invalid GroupId</p>;
   }
-    
+
   const newGroupButton = (
     <button
       onClick={() => {
@@ -55,6 +59,7 @@ function App() {
           type: "ARCHIVE",
           newGroupId: generateId<GroupId>(),
           groupId: groupView,
+          source: { selected: selectedItems },
         });
       }}
     >
@@ -97,11 +102,11 @@ function App() {
   );
 
   const imagePanels = Object.keys(status.groups[groupView].items).map(
-    (key, idx) => (
-      <div key={idx} onClick={() => onSelect(key)}>
+    (id, idx) => (
+      <div key={idx} onClick={() => onSelect(id)}>
         <ImagePreview
-          file={status.groups[groupView].items[key].file}
-          marked={status.groups[groupView].items[key].marked}
+          file={status.groups[groupView].items[id].file}
+          marked={selectedItems.includes(id)}
         />
       </div>
     )

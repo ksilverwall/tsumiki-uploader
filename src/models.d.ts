@@ -3,7 +3,6 @@ type ItemId = string;
 
 type Item = {
   file: File;
-  marked: boolean;
 };
 
 type Group = {
