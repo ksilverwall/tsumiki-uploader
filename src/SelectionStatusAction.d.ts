@@ -13,4 +13,16 @@ type CreateGroupAction = {
   };
 };
 
-type Action = LoadAction | CreateGroupAction;
+type UploadAction = {
+  type: "UPLOAD";
+  promises: { [key: GroupId]: Promise };
+};
+
+type Action = LoadAction | CreateGroupAction | UploadAction;
+
+type UploadGroupAction = {
+  type: "UPLOAD";
+  promise: Promise<void>;
+};
+
+type GroupAction = UploadGroupAction;

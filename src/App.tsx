@@ -4,6 +4,7 @@ import { uuidv7 } from "uuidv7";
 import reducer from "./reducer";
 import "./App.css";
 import GalleryView from "./GalleryView";
+import Uploader from "./Uploader";
 
 function generateId<T extends string>(): T {
   const newId = uuidv7();
@@ -61,12 +62,41 @@ function App() {
     []
   );
 
+  const onArchiveAll = () => {
+    const promiseList = Object.keys(status.groups)
+      .filter((groupId) => {
+        const g = status.groups[groupId];
+        return g.state === "EDITING" && Object.keys(g.items).length > 0;
+      })
+      .map((groupId) => {
+        const files = Object.values(status.groups[groupId].items).map(
+          (item) => item.file
+        );
+        return { groupId, promise: new Uploader().upload(files) };
+      });
+    dispatch({
+      type: "UPLOAD",
+      promises: Object.fromEntries(
+        promiseList.map(({ groupId, promise }) => [groupId, promise])
+      ),
+    });
+  };
+
   const groupButtons = (
     <div style={{ display: "flex", flexDirection: "column" }}>
       {Object.keys(status.groups)
         .sort()
-        .map((v) => (
-          <button onClick={() => navigate(`?group=${v}`)}>{v}</button>
+        .map((groupId) => (
+          <button onClick={() => navigate(`?group=${groupId}`)}>
+            <div style={{ display: "flex", flexDirection: "row" }}>
+              <div>
+                <p>{`[${status.groups[groupId].state}]`}</p>
+              </div>
+              <div>
+                <p>{groupId}</p>
+              </div>
+            </div>
+          </button>
         ))}
       <button
         onClick={() =>
@@ -78,7 +108,7 @@ function App() {
     </div>
   );
 
-  const archiveAllButton = <button>Archive All</button>;
+  const archiveAllButton = <button onClick={onArchiveAll}>Archive All</button>;
 
   return (
     <>

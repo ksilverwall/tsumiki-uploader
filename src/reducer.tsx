@@ -1,4 +1,31 @@
-const StatusReducer = (state: Status, action: Action): Status => {
+type Reducer<S, A> = (group: S, action: A) => S;
+
+function mapDict<S>(
+  groups: { [key: string]: S },
+  func: (key: string, value: S) => S
+): { [key: string]: S } {
+  return Object.fromEntries(
+    Object.keys(groups).map((groupId) => [
+      groupId,
+      func(groupId, groups[groupId]),
+    ])
+  );
+}
+
+const GroupReducer: Reducer<Group, GroupAction> = (state, action) => {
+  switch (action.type) {
+    case "UPLOAD":
+      return {
+        ...state,
+        state: "ARCHIVING",
+        promise: action.promise,
+      };
+    default:
+      return state;
+  }
+};
+
+const StatusReducer: Reducer<Status, Action> = (state, action) => {
   switch (action.type) {
     case "LOAD":
       return {
@@ -64,6 +91,16 @@ const StatusReducer = (state: Status, action: Action): Status => {
         groups: { ...state.groups, ...groups },
       };
     }
+    case "UPLOAD":
+      return {
+        ...state,
+        groups: mapDict(state.groups, (groupId, group) =>
+          GroupReducer(group, {
+            type: "UPLOAD",
+            promise: action.promises[groupId],
+          })
+        ),
+      };
     default:
       return state;
   }
