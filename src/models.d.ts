@@ -1,12 +1,18 @@
+type GroupId = string;
+type ItemId = string;
+
 type Item = {
   id: number;
   file: File;
   marked: boolean;
-  archiveId: number;
+};
+
+type Group = {
+  items: Item[];
 };
 
 type Status = {
   nextArchiveId: number;
   nextItemId: number;
-  items: Item[];
+  groups: { [key: GroupId]: Group };
 };

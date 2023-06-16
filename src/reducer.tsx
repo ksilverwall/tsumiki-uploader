@@ -10,42 +10,64 @@ const ItemReducer = (state: Item, action: Action): Item => {
   }
 };
 
-const StatusReducer = (state: Status, action: Action): Status => {
+const StatusGroupReducer = (state: Group, action: Action): Group => {
   switch (action.type) {
     case "MARK_ITEM":
       return {
-        ...state,
         items: state.items.map((v, i) =>
           i === action.index ? ItemReducer(v, action) : v
         ),
       };
     case "LOAD":
+    default:
+      return state;
+  }
+};
+
+const StatusReducer = (state: Status, action: Action): Status => {
+  switch (action.type) {
+    case "MARK_ITEM":
+      return {
+        ...state,
+        groups: {
+          ...state.groups,
+          [action.groupId]: StatusGroupReducer(
+            state.groups[action.groupId],
+            action
+          ),
+        },
+      };
+    case "LOAD":
       return {
         ...state,
         nextItemId: state.nextArchiveId + action.files.length,
-        items: [
-          ...state.items,
-          ...action.files.map((f, i) => ({
-            id: state.nextArchiveId + i,
-            file: f,
-            marked: false,
-            archiveId: 0,
-          })),
-        ],
+        groups: {
+          ...state.groups,
+          [action.groupId]: {
+            items: [
+              ...state.groups[action.groupId].items,
+              ...action.files.map((f, i) => ({
+                id: state.nextArchiveId + i,
+                file: f,
+                marked: false,
+              })),
+            ],
+          },
+        },
       };
     case "ARCHIVE":
       return {
         ...state,
         nextArchiveId: state.nextArchiveId + 1,
-        items: state.items.map((s) =>
-          s.marked
-            ? {
-                ...s,
-                marked: false,
-                archiveId: state.nextArchiveId,
-              }
-            : s
-        ),
+        groups: {
+          ...state.groups,
+          [state.nextArchiveId.toString()]: {
+            items: state.groups[action.groupId].items.filter((s) => s.marked),
+          },
+          [action.groupId]: {
+            items: state.groups[action.groupId].items.filter((s) => !s.marked),
+          },
+        },
       };
     default:
       return state;

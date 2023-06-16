@@ -8,37 +8,40 @@ import "./App.css";
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const DEFAULT_GROUP_ID = 0;
+  const DEFAULT_GROUP_ID = "0";
 
-  const [groupView, setGroupView] = useState<number>(DEFAULT_GROUP_ID);
+  const [groupView, setGroupView] = useState<string>(DEFAULT_GROUP_ID);
   const [status, dispatch] = useReducer(reducer, {
     nextArchiveId: 0,
     nextItemId: 0,
-    items: [],
+    groups: {
+      [DEFAULT_GROUP_ID]: {items: []},
+    },
   });
 
   useEffect(() => {
     const dict = Object.fromEntries(
       new URLSearchParams(location.search).entries()
     );
-    setGroupView(dict["group"] ? parseInt(dict["group"]) : DEFAULT_GROUP_ID);
+    setGroupView(dict["group"] ?? DEFAULT_GROUP_ID);
   }, [location.search]);
 
   const onSelect = useCallback(
     (index: number) => {
       dispatch({
         type: "MARK_ITEM",
+        groupId: groupView,
         index: index,
-        value: !status.items[index].marked,
+        value: !status.groups[groupView].items[index].marked,
       });
     },
-    [status]
+    [status, groupView]
   );
 
   const archiveButton = (
     <button
       onClick={() => {
-        dispatch({ type: "ARCHIVE" });
+        dispatch({ type: "ARCHIVE", groupId: groupView });
       }}
     >
       Archive
@@ -47,26 +50,20 @@ function App() {
 
   const groupButtons = (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      {[
-        ...new Set(
-          status.items
-            .map((item) => item.archiveId)
-            .filter((v) => v !== undefined)
-        ),
-      ]
-        .sort()
-        .map((v) => (
-          <button onClick={() => navigate(`?group=${v}`)}>{v}</button>
-        ))}
+      {[Object.keys(status.groups)].sort().map((v) => (
+        <button onClick={() => navigate(`?group=${v}`)}>{v}</button>
+      ))}
     </div>
   );
 
-  const renderItems = status.items.filter(
-    (item) => item.archiveId === groupView
-  );
+  const renderItems = status.groups[groupView].items;
 
   const loaderPanel = (
-    <FileLoader onLoaded={(files) => dispatch({ type: "LOAD", files })} />
+    <FileLoader
+      onLoaded={(files) =>
+        dispatch({ type: "LOAD", groupId: groupView, files })
+      }
+    />
   );
 
   const imagePanels = renderItems.map((item, idx) => (
@@ -79,7 +76,7 @@ function App() {
     <div className="gallery-view">
       <p>{groupView}</p>
       <div className="image-list">
-        {status.items.length > 0 ? (
+        {status.groups[groupView].items.length > 0 ? (
           <>
             <div>{loaderPanel}</div>
             {imagePanels.map((p) => (
