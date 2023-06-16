@@ -41,7 +41,7 @@ const StatusReducer = (state: Status, action: Action): Status => {
             ? {
                 ...s,
                 marked: false,
-                archiveiId: state.nextArchiveId,
+                archiveId: state.nextArchiveId,
               }
             : s
         ),

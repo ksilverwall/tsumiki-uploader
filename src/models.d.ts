@@ -2,7 +2,7 @@ type Item = {
   id: number;
   file: File;
   marked: boolean;
-  archiveiId?: number;
+  archiveId?: number;
 };
 
 type Status = {

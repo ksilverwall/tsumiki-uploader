@@ -24,11 +24,14 @@
 
 .main-section {
   flex: 1;
+  display: flex;
 }
 
 .gallery-view {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  margin: 1rem;
 }
 
 .image-list {

@@ -49,7 +49,7 @@ function App() {
       {[
         ...new Set(
           status.items
-            .map((item) => item.archiveiId)
+            .map((item) => item.archiveId)
             .filter((v) => v !== undefined)
         ),
       ]
@@ -60,22 +60,33 @@ function App() {
     </div>
   );
 
+  const renderItems = status.items.filter(
+    (item) => item.archiveId === groupView
+  );
+
+  const loaderPanel = (
+    <FileLoader onLoaded={(files) => dispatch({ type: "LOAD", files })} />
+  );
+
+  const imagePanels = renderItems.map((item, idx) => (
+    <div key={idx} onClick={() => onSelect(item.id)}>
+      <ImagePreview file={item.file} marked={item.marked} />
+    </div>
+  ));
+
   const galleryView = (
     <div className="gallery-view">
       <p>{groupView}</p>
       <div className="image-list">
         {status.items.length > 0 ? (
           <>
-            {status.items
-              .filter((item) => item.archiveiId === groupView)
-              .map((item, idx) => (
-                <div key={idx} onClick={() => onSelect(item.id)}>
-                  <ImagePreview file={item.file} marked={item.marked} />
-                </div>
-              ))}
+            <div>{loaderPanel}</div>
+            {imagePanels.map((p) => (
+              <div>{p}</div>
+            ))}
           </>
         ) : (
-          <FileLoader onLoaded={(files) => dispatch({ type: "LOAD", files })} />
+          loaderPanel
         )}
       </div>
     </div>
