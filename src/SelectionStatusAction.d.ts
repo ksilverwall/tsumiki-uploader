@@ -4,18 +4,13 @@ type LoadAction = {
   items: { id: ItemId; file: File }[];
 };
 
-type ArchiveAction = {
-  type: "ARCHIVE";
+type CreateGroupAction = {
+  type: "CREATE_GROUP";
   newGroupId: GroupId;
-  groupId: GroupId;
-  source: {
+  source?: {
+    groupId: GroupId;
     selected: ItemId[];
   };
 };
 
-type CreateGroupAction = {
-  type: "CREATE_GROUP";
-  newGroupId: GroupId;
-};
-
-type Action = LoadAction | ArchiveAction | CreateGroupAction;
+type Action = LoadAction | CreateGroupAction;

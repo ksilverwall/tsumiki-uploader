@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
-import { redirect, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { uuidv7 } from "uuidv7";
 import ImagePreview from "./ImagePreview";
 import FileLoader from "./FileLoader";
@@ -56,10 +56,12 @@ function App() {
     <button
       onClick={() => {
         dispatch({
-          type: "ARCHIVE",
+          type: "CREATE_GROUP",
           newGroupId: generateId<GroupId>(),
-          groupId: groupView,
-          source: { selected: selectedItems },
+          source: {
+            groupId: groupView,
+            selected: selectedItems,
+          },
         });
       }}
     >
