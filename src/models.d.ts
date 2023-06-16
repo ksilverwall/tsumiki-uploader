@@ -6,6 +6,8 @@ type Item = {
 };
 
 type Group = {
+  label: string;
+  state: 'EDITING' | 'ARCHIVING' | 'COMPLETE';
   items: { [key: ItemId]: Item };
 };
 

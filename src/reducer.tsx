@@ -6,6 +6,7 @@ const StatusReducer = (state: Status, action: Action): Status => {
         groups: {
           ...state.groups,
           [action.groupId]: {
+            ...state.groups[action.groupId],
             items: {
               ...state.groups[action.groupId].items,
               ...Object.fromEntries(
@@ -22,11 +23,11 @@ const StatusReducer = (state: Status, action: Action): Status => {
         },
       };
     case "CREATE_GROUP": {
-      let groups;
+      let groups: { [key: GroupId]: Group };
       const source = action.source;
       if (source) {
-        const marked: {[key: ItemId]: Item} = {};
-        const least: {[key: ItemId]: Item} = {};
+        const marked: { [key: ItemId]: Item } = {};
+        const least: { [key: ItemId]: Item } = {};
         const items = state.groups[source.groupId].items;
 
         Object.keys(items).forEach((key) => {
@@ -38,15 +39,21 @@ const StatusReducer = (state: Status, action: Action): Status => {
         });
         groups = {
           [source.groupId]: {
+            label: "無題",
+            state: "EDITING",
             items: least,
           },
           [action.newGroupId]: {
+            label: "無題",
+            state: "EDITING",
             items: marked,
           },
         };
       } else {
         groups = {
           [action.newGroupId]: {
+            label: "無題",
+            state: "EDITING",
             items: {},
           },
         };

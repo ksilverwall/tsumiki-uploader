@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { uuidv7 } from "uuidv7";
 import ImagePreview from "./ImagePreview";
@@ -14,13 +14,18 @@ function generateId<T extends string>(): T {
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const DEFAULT_GROUP_ID = "0";
 
-  const [groupView, setGroupView] = useState<string>(DEFAULT_GROUP_ID);
+  const DEFAULT_GROUP_ID = useMemo(() => generateId<GroupId>(), []);
+
+  const [viewGroupId, setViewGroupId] = useState<string>(DEFAULT_GROUP_ID);
   const [selectedItems, setSelectedItems] = useState<ItemId[]>([]);
   const [status, dispatch] = useReducer(reducer, {
     groups: {
-      [DEFAULT_GROUP_ID]: { items: {} },
+      [DEFAULT_GROUP_ID]: {
+        label: "無題",
+        state: "EDITING",
+        items: {},
+      },
     },
   });
 
@@ -28,12 +33,12 @@ function App() {
     const dict = Object.fromEntries(
       new URLSearchParams(location.search).entries()
     );
-    setGroupView(dict["group"] ?? DEFAULT_GROUP_ID);
-  }, [location.search]);
+    setViewGroupId(dict["group"] ?? DEFAULT_GROUP_ID);
+  }, [DEFAULT_GROUP_ID, location.search]);
 
   useEffect(() => {
     setSelectedItems([]);
-  }, [groupView]);
+  }, [viewGroupId]);
 
   const onSelect = useCallback(
     (id: ItemId) => {
@@ -46,30 +51,18 @@ function App() {
     [selectedItems]
   );
 
-  if (!status.groups[groupView]) {
-    // FIXME: change url
-    setGroupView(DEFAULT_GROUP_ID);
-    return <p>Invalid GroupId</p>;
-  }
-
-  const newGroupButton = (
-    <button
-      onClick={() => {
-        dispatch({
-          type: "CREATE_GROUP",
-          newGroupId: generateId<GroupId>(),
-          source: {
-            groupId: groupView,
-            selected: selectedItems,
-          },
-        });
-      }}
-    >
-      New Group
-    </button>
+  const onLoad = useCallback(
+    (groupId: GroupId, files: File[]) =>
+      dispatch({
+        type: "LOAD",
+        groupId: groupId,
+        items: files.map((f) => ({
+          id: generateId<ItemId>(),
+          file: f,
+        })),
+      }),
+    []
   );
-
-  const archiveAllButton = <button>Archive All</button>;
 
   const groupButtons = (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -88,52 +81,66 @@ function App() {
     </div>
   );
 
-  const loaderPanel = (
-    <FileLoader
-      onLoaded={(files) =>
+  const newGroupButton = viewGroupId ? (
+    <button
+      onClick={() => {
         dispatch({
-          type: "LOAD",
-          groupId: groupView,
-          items: files.map((f) => ({
-            id: generateId<ItemId>(),
-            file: f,
-          })),
-        })
-      }
-    />
-  );
+          type: "CREATE_GROUP",
+          newGroupId: generateId<GroupId>(),
+          source: {
+            groupId: viewGroupId,
+            selected: selectedItems,
+          },
+        });
+      }}
+    >
+      New Group
+    </button>
+  ) : null;
 
-  const imagePanels = Object.keys(status.groups[groupView].items).map(
-    (id, idx) => (
-      <div key={idx} onClick={() => onSelect(id)}>
-        <ImagePreview
-          file={status.groups[groupView].items[id].file}
-          marked={selectedItems.includes(id)}
-        />
-      </div>
-    )
-  );
-
-  const galleryView = (
-    <div className="gallery-view">
-      <div>
-        <p>{groupView}</p>
-        {newGroupButton}
-      </div>
-      <div className="image-list">
-        {Object.keys(status.groups[groupView].items).length > 0 ? (
+  const gallerySlots = viewGroupId
+    ? {
+        loaderPanel: (
+          <FileLoader onLoaded={(file) => onLoad(viewGroupId, file)} />
+        ),
+        imagePanels: Object.keys(status.groups[viewGroupId].items).map(
+          (id, idx) => (
+            <div key={idx} onClick={() => onSelect(id)}>
+              <ImagePreview
+                file={status.groups[viewGroupId].items[id].file}
+                marked={selectedItems.includes(id)}
+              />
+            </div>
+          )
+        ),
+        galleryHeader: (
           <>
-            <div>{loaderPanel}</div>
-            {imagePanels.map((p) => (
+            <p>{status.groups[viewGroupId].label}</p>
+            {newGroupButton}
+          </>
+        ),
+      }
+    : null;
+
+  const galleryView = gallerySlots ? (
+    <div className="gallery-view">
+      <div>{gallerySlots.galleryHeader}</div>
+      <div className="image-list">
+        {gallerySlots.imagePanels.length > 0 ? (
+          <>
+            <div>{gallerySlots.loaderPanel}</div>
+            {gallerySlots.imagePanels.map((p) => (
               <div>{p}</div>
             ))}
           </>
         ) : (
-          loaderPanel
+          gallerySlots.loaderPanel
         )}
       </div>
     </div>
-  );
+  ) : null;
+
+  const archiveAllButton = <button>Archive All</button>;
 
   return (
     <>
