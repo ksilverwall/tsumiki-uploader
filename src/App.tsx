@@ -42,7 +42,7 @@ function App() {
     [status, groupView]
   );
 
-  const archiveButton = (
+  const newGroupButton = (
     <button
       onClick={() => {
         dispatch({
@@ -52,9 +52,11 @@ function App() {
         });
       }}
     >
-      Archive
+      New Group
     </button>
   );
+
+  const archiveAllButton = <button>Archive All</button>;
 
   const groupButtons = (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -101,7 +103,10 @@ function App() {
 
   const galleryView = (
     <div className="gallery-view">
-      <p>{groupView}</p>
+      <div>
+        <p>{groupView}</p>
+        {newGroupButton}
+      </div>
       <div className="image-list">
         {Object.keys(status.groups[groupView].items).length > 0 ? (
           <>
@@ -125,7 +130,7 @@ function App() {
       <div className="body-container">
         <aside className="sidebar">
           <div className="sidebar-contents">{groupButtons}</div>
-          <div>{archiveButton}</div>
+          <div>{archiveAllButton}</div>
         </aside>
         <section className="main-section">{galleryView}</section>
       </div>
