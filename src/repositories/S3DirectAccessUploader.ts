@@ -12,7 +12,13 @@ export default class S3DirectAccessBufferUploader implements BufferUploader {
   private readonly bucket: string;
 
   constructor(settings: S3DirectAccessSettings) {
-    this.s3 = new AWS.S3(settings.config);
+    AWS.config.update({
+      accessKeyId: "YOUR_ACCESS_KEY",
+      secretAccessKey: "YOUR_SECRET_KEY",
+      region: "us-east-1",
+      s3: { endpoint: "http://localhost:4566" },
+    });
+    this.s3 = new AWS.S3();
     this.bucket = settings.bucket;
   }
   async upload(zipData: ArrayBuffer): Promise<string> {

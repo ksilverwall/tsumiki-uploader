@@ -5,7 +5,6 @@ import reducer from "./reducer";
 import "./App.css";
 import GalleryView from "./GalleryView";
 import Uploader from "./repositories/Uploader";
-import { DummyBufferUploader } from "./repositories/DummyBufferUploader";
 import S3DirectAccessBufferUploader from "./repositories/S3DirectAccessUploader";
 
 function generateId<T extends string>(): T {

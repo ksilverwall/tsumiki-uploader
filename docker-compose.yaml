@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+    volumes:
+      - ./data:/tmp/localstack
+    networks:
+      - localstack-network
+  awscli:
+    image: amazon/aws-cli
+    volumes:
+      - ~/.aws:/root/.aws
+      - .:/aws
+    working_dir: /aws
+    depends_on:
+      - localstack
+    networks:
+      - localstack-network
+    environment:
+      - AWS_ACCESS_KEY=YOUR_ACCESS_KEY
+      - AWS_ACCESS_SECRET=YOUR_SECRET_KEY
+      - AWS_REGION=us-east-1
+    command: --endpoint-url http://localstack:4566 s3api create-bucket --bucket local-test-backet
+volumes:
+  localstack:
+networks:
+  localstack-network:
