@@ -5,10 +5,11 @@ services:
     image: localstack/localstack
     ports:
       - "4566:4566"
+      - "4510-4559:4510-4559"
     environment:
-      - SERVICES=s3
+      - SERVICES=s3,serverless,lambda,apigateway
     volumes:
-      - ./data:/tmp/localstack
+      - ./data:/tmp/localstack-storage
     networks:
       - localstack-network
   awscli:
@@ -27,6 +28,6 @@ services:
       - AWS_REGION=us-east-1
     command: --endpoint-url http://localstack:4566 s3api create-bucket --bucket local-test-backet
 volumes:
-  localstack:
+  localstack-storage:
 networks:
   localstack-network:
