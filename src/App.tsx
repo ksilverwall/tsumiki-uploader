@@ -5,7 +5,7 @@ import reducer from "./reducer";
 import "./App.css";
 import GalleryView from "./GalleryView";
 import Uploader from "./repositories/Uploader";
-import S3DirectAccessBufferUploader from "./repositories/S3DirectAccessUploader";
+import BackendSignedBufferUploader from "./repositories/BackendSignedBufferUploader";
 
 function generateId<T extends string>(): T {
   const newId = uuidv7();
@@ -84,14 +84,7 @@ function App() {
         promise: (async () => {
           try {
             const key = await new Uploader(
-              new S3DirectAccessBufferUploader({
-                bucket: "bucket-name",
-                config: {
-                  accessKeyId: import.meta.env["AWS_ACCESS_KEY"],
-                  secretAccessKey: import.meta.env["AWS_ACCESS_SECRET"],
-                  region: import.meta.env["AWS_REGION"],
-                },
-              })
+              new BackendSignedBufferUploader()
             ).upload(files);
             dispatch({
               type: "UPLOAD_COMPLETE",
