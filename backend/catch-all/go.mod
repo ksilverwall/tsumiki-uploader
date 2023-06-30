@@ -1,5 +1,6 @@
 require (
 	github.com/aws/aws-lambda-go v1.36.1
+	github.com/aws/aws-sdk-go v1.44.293 // indirect
 	github.com/deepmap/oapi-codegen v1.13.0
 	github.com/getkin/kin-openapi v0.117.0
 	github.com/labstack/echo/v4 v4.10.2

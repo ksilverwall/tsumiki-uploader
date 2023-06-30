@@ -2,11 +2,15 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"log"
 
 	"catch-all/apigateway"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 )
 
 var (
@@ -32,6 +36,16 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 }
 
 func main() {
-	MainRouter.Register(Server{})
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	})
+	if err != nil {
+		log.Println(fmt.Sprintf("failed to create session: %v", err))
+		return
+	}
+	MainRouter.Register(Server{
+		AWSSession: sess,
+		BucketName: "dummy-bucket-name",
+	})
 	lambda.Start(handler)
 }
