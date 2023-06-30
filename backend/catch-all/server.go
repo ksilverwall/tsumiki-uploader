@@ -1,27 +1,20 @@
 package main
 
 import (
-	"catch-all/gen/openapi"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
 type Server struct{}
 
-// List all pets
-// (GET /pets)
-func (s Server) ListPets(ctx echo.Context, params openapi.ListPetsParams) error {
-	return nil
-}
+// (POST /storage/transaction/)
+func (s Server) CreateTransaction(ctx echo.Context) error {
+	data := struct {
+		Message string `json:"message"`
+	}{
+		Message: "dummy message",
+	}
 
-// Create a pet
-// (POST /pets)
-func (s Server) CreatePets(ctx echo.Context) error {
-	return nil
-}
-
-// Info for a specific pet
-// (GET /pets/{petId})
-func (s Server) ShowPetById(ctx echo.Context, petId string) error {
-	return nil
+	return ctx.JSON(http.StatusOK, data)
 }
