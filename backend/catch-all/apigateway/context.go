@@ -1,6 +1,7 @@
 package apigateway
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"mime/multipart"
@@ -11,8 +12,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type ContextStatus struct {
+	Response *events.APIGatewayProxyResponse
+}
+
 type Context struct {
-	response *events.APIGatewayProxyResponse
+	Status *ContextStatus
 }
 
 //
@@ -82,12 +87,22 @@ func (c Context) HTMLBlob(code int, b []byte) error {
 	return errors.New("not implemented")
 }
 func (c Context) String(code int, s string) error {
-	c.non_implemented_method_call()
-	return errors.New("not implemented")
+	c.Status.Response = &events.APIGatewayProxyResponse{
+		StatusCode: code,
+		Body:       s,
+	}
+
+	return nil
 }
 func (c Context) JSON(code int, i interface{}) error {
-	c.non_implemented_method_call()
-	return errors.New("not implemented")
+	b, err := json.Marshal(i)
+	if err != nil {
+		return err
+	}
+
+	c.String(code, string(b))
+
+	return nil
 }
 func (c Context) JSONPretty(code int, i interface{}, indent string) error {
 	c.non_implemented_method_call()
@@ -163,6 +178,10 @@ func (c Context) non_implemented_method_call() {}
 // Constructor
 //
 
-func NewContext(res *events.APIGatewayProxyResponse) Context {
-	return Context{}
+func NewContext() Context {
+	return Context{
+		Status: &ContextStatus{
+			Response: &events.APIGatewayProxyResponse{StatusCode: 200, Body: "Default"},
+		},
+	}
 }

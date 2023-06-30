@@ -14,18 +14,21 @@ var (
 )
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	ctx := apigateway.NewContext()
 	route := MainRouter.GetRoute(request.Path, request.HTTPMethod)
 	if route == nil {
 		return events.APIGatewayProxyResponse{}, errors.New("Route not found")
 	}
 
-	res := events.APIGatewayProxyResponse{}
-
-	if err := route.Handler(apigateway.NewContext(&res)); err != nil {
+	if err := route.Handler(ctx); err != nil {
 		return events.APIGatewayProxyResponse{}, err
 	}
 
-	return res, nil
+	if ctx.Status.Response == nil {
+		return events.APIGatewayProxyResponse{}, errors.New("response not found")
+	}
+
+	return *ctx.Status.Response, nil
 }
 
 func main() {
