@@ -8,6 +8,15 @@ Globals:
     MemorySize: 128
 
 Resources:
+  Storage:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
   BackendFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -24,7 +33,7 @@ Resources:
             Method: ANY
       Environment:
         Variables:
-          PARAM1: VALUE
+          STORAGE_BUCKET_NAME: !Ref MyS3Bucket
 
 Outputs:
   BackendAPI:

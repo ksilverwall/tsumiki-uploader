@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"catch-all/apigateway"
 
@@ -45,7 +46,7 @@ func main() {
 	}
 	MainRouter.Register(Server{
 		AWSSession: sess,
-		BucketName: "dummy-bucket-name",
+		BucketName: os.Getenv("STORAGE_BUCKET_NAME"),
 	})
 	lambda.Start(handler)
 }
