@@ -17,6 +17,15 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
+  BackendApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
   BackendFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -31,14 +40,15 @@ Resources:
           Properties:
             Path: /{proxy+}
             Method: ANY
+            RestApiId: !Ref BackendApi
       Environment:
         Variables:
           STORAGE_BUCKET_NAME: !Ref Storage
 
 Outputs:
-  BackendAPI:
+  BackendUrl:
     Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Value: !Sub "https://${BackendApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
   BackendFunction:
     Description: "First Lambda Function ARN"
     Value: !GetAtt BackendFunction.Arn

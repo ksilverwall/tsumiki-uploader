@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"catch-all/apigateway"
@@ -15,10 +16,22 @@ import (
 )
 
 var (
-	MainRouter = apigateway.NewRouter()
+	MainRouter  = apigateway.NewRouter()
+	CORSHeaders = map[string]string{
+		"Access-Control-Allow-Origin":  "*",
+		"Access-Control-Allow-Headers": "Content-Type, Authorization",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	}
 )
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	if request.HTTPMethod == http.MethodOptions {
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusOK,
+			Headers:    CORSHeaders,
+		}, nil
+	}
+
 	ctx := apigateway.NewContext()
 	route := MainRouter.GetRoute(request.Path, request.HTTPMethod)
 	if route == nil {
@@ -33,7 +46,11 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return events.APIGatewayProxyResponse{}, errors.New("response not found")
 	}
 
-	return *ctx.Status.Response, nil
+	return events.APIGatewayProxyResponse{
+		Headers:    CORSHeaders,
+		StatusCode: ctx.Status.Response.StatusCode,
+		Body:       ctx.Status.Response.Body,
+	}, nil
 }
 
 func main() {
