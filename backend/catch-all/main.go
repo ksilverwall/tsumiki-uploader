@@ -55,7 +55,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 func main() {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1"),
+		Region: aws.String(os.Getenv("STORAGE_REGION")),
 	})
 	if err != nil {
 		log.Println(fmt.Sprintf("failed to create session: %v", err))
