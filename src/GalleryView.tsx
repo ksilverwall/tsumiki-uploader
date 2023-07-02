@@ -1,13 +1,15 @@
 import ImagePreview from "./ImagePreview";
 import FileLoader from "./FileLoader";
 import { useCallback, useEffect, useState } from "react";
+import GalleryViewLayout from "./GalleryViewLayout";
 
 const GalleryView: React.FC<{
   groupId: GroupId;
   group: Group;
+  url?: string;
   onLoad: (id: GroupId, files: File[]) => void;
   onCreateGroup: (id: GroupId, selected: ItemId[]) => void;
-}> = ({ groupId, group, onLoad, onCreateGroup }) => {
+}> = ({ groupId, group, url, onLoad, onCreateGroup }) => {
   const [selectedItems, setSelectedItems] = useState<ItemId[]>([]);
 
   const onSelect = useCallback(
@@ -25,54 +27,33 @@ const GalleryView: React.FC<{
     setSelectedItems([]);
   }, [groupId]);
 
-  const newGroupButton = groupId ? (
-    <button onClick={() => onCreateGroup(groupId, selectedItems)}>
-      New Group
-    </button>
-  ) : null;
+  if (!groupId || !group) {
+    return null;
+  }
 
-  const gallerySlots =
-    groupId && group
-      ? {
-          loaderPanel: (
-            <FileLoader onLoaded={(file) => onLoad(groupId, file)} />
-          ),
-          imagePanels: Object.keys(group.items).map((id, idx) => (
-            <div key={idx} onClick={() => onSelect(id)}>
-              <ImagePreview
-                file={group.items[id].file}
-                marked={selectedItems.includes(id)}
-              />
-            </div>
-          )),
-          galleryHeader: (
-            <>
-              <p>{group.label}</p>
-              {newGroupButton}
-            </>
-          ),
+  const slots = {
+    header: (
+      <>
+        <p>{group.label}</p>
+        {
+          <button onClick={() => onCreateGroup(groupId, selectedItems)}>
+            New Group
+          </button>
         }
-      : null;
-
-  const galleryView = gallerySlots ? (
-    <div className="gallery-view">
-      <div>{gallerySlots.galleryHeader}</div>
-      <div className="image-list">
-        {gallerySlots.imagePanels.length > 0 ? (
-          <>
-            <div>{gallerySlots.loaderPanel}</div>
-            {gallerySlots.imagePanels.map((p) => (
-              <div>{p}</div>
-            ))}
-          </>
-        ) : (
-          gallerySlots.loaderPanel
-        )}
+        {url ? <p>{url}</p> : null}
+      </>
+    ),
+    images: [<FileLoader onLoaded={(file) => onLoad(groupId, file)} />].concat(Object.keys(group.items).map((id, idx) => (
+      <div key={idx} onClick={() => onSelect(id)}>
+        <ImagePreview
+          file={group.items[id].file}
+          marked={selectedItems.includes(id)}
+        />
       </div>
-    </div>
-  ) : null;
+    ))),
+  }
 
-  return galleryView;
+  return <GalleryViewLayout slots={slots} />
 };
 
 export default GalleryView;

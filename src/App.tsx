@@ -147,6 +147,7 @@ function App() {
           <GalleryView
             groupId={viewGroupId}
             group={status.groups[viewGroupId]}
+            url={status.groups[viewGroupId]?.state === 'COMPLETE'? "http://example.com/download" : undefined}
             onLoad={onLoad}
             onCreateGroup={onCreateGroup}
           />
