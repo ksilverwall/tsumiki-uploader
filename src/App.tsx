@@ -72,6 +72,10 @@ function App() {
       return g.state === "EDITING" && Object.keys(g.items).length > 0;
     });
 
+    if (targetGroupIds.length === 0) {
+      return
+    }
+
     const promiseList = targetGroupIds.map((groupId) => {
       const files = Object.values(status.groups[groupId].items).map(
         (item) => item.file
@@ -103,7 +107,7 @@ function App() {
 
     setPromisePool(promisePool.concat(promiseList));
     dispatch({ type: "UPLOAD_MANY", groupIds: targetGroupIds });
-  }, []);
+  }, [status.groups]);
 
   const groupButtons = (
     <div style={{ display: "flex", flexDirection: "column" }}>
