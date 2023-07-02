@@ -3,13 +3,44 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { uuidv7 } from "uuidv7";
 import reducer from "./reducer";
 import "./App.css";
-import GalleryView from "./GalleryView";
 import Uploader from "./repositories/Uploader";
 import BackendSignedBufferUploader from "./repositories/BackendSignedBufferUploader";
+import GalleryViewLayout from "./GalleryViewLayout";
+import FileLoader from "./FileLoader";
+import ImagePreview from "./ImagePreview";
 
 function generateId<T extends string>(): T {
   const newId = uuidv7();
   return newId as T;
+}
+
+// selectedItems, onCreateGroup, onSelect, onLoad: EDITTING Only
+// url: COMPLETE Only
+const createSectionElement = (groupId: GroupId, group: Group, selectedItems: ItemId[], onSelect: (id: ItemId) => void, onCreateGroup: (groupId: GroupId, ids: ItemId[]) => void, onLoad: (groupId: GroupId, files: File[]) => void): JSX.Element => {
+  const url = group.state === 'COMPLETE' ? "http://example.com/download" : undefined;
+  const slots = {
+    header: (
+      <>
+        <p>{group.label}</p>
+        {
+          <button onClick={() => onCreateGroup(groupId, selectedItems)}>
+            New Group
+          </button>
+        }
+        {url ? <p>{url}</p> : null}
+      </>
+    ),
+    images: [<FileLoader onLoaded={(file) => onLoad(groupId, file)} />].concat(Object.keys(group.items).map((id, idx) => (
+      <div key={idx} onClick={() => onSelect(id)}>
+        <ImagePreview
+          file={group.items[id].file}
+          marked={selectedItems.includes(id)}
+        />
+      </div>
+    ))),
+  }
+
+  return <GalleryViewLayout slots={slots} />
 }
 
 function App() {
@@ -32,12 +63,29 @@ function App() {
     },
   });
 
+  const [selectedItems, setSelectedItems] = useState<ItemId[]>([]);
+
+  useEffect(() => {
+    setSelectedItems([]);
+  }, [viewGroupId]);
+
   useEffect(() => {
     const dict = Object.fromEntries(
       new URLSearchParams(location.search).entries()
     );
     setViewGroupId(dict["group"] ?? DEFAULT_GROUP_ID);
   }, [DEFAULT_GROUP_ID, location.search]);
+
+  const onSelect = useCallback(
+    (id: ItemId) => {
+      if (selectedItems.includes(id)) {
+        setSelectedItems(selectedItems.filter((v) => v !== id));
+      } else {
+        setSelectedItems(selectedItems.concat(id));
+      }
+    },
+    [selectedItems]
+  );
 
   const onLoad = useCallback(
     (groupId: GroupId, files: File[]) =>
@@ -66,7 +114,7 @@ function App() {
     []
   );
 
-  const onArchiveAll = () => {
+  const onArchiveAll = useCallback(() => {
     const targetGroupIds = Object.keys(status.groups).filter((groupId) => {
       const g = status.groups[groupId];
       return g.state === "EDITING" && Object.keys(g.items).length > 0;
@@ -103,7 +151,7 @@ function App() {
 
     setPromisePool(promisePool.concat(promiseList));
     dispatch({ type: "UPLOAD_MANY", groupIds: targetGroupIds });
-  };
+  }, []);
 
   const groupButtons = (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -134,7 +182,7 @@ function App() {
   const archiveAllButton = <button onClick={onArchiveAll}>Archive All</button>;
 
   return (
-    <>
+    <div>
       <header>
         <p>Tsumiki Uploader</p>
       </header>
@@ -144,16 +192,10 @@ function App() {
           <div>{archiveAllButton}</div>
         </aside>
         <section className="main-section">
-          <GalleryView
-            groupId={viewGroupId}
-            group={status.groups[viewGroupId]}
-            url={status.groups[viewGroupId]?.state === 'COMPLETE'? "http://example.com/download" : undefined}
-            onLoad={onLoad}
-            onCreateGroup={onCreateGroup}
-          />
+          {(viewGroupId && status.groups[viewGroupId]) ? createSectionElement(viewGroupId, status.groups[viewGroupId], selectedItems, onSelect, onCreateGroup, onLoad) : null}
         </section>
       </div>
-    </>
+    </div>
   );
 }
 
