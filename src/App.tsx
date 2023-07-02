@@ -30,17 +30,23 @@ const createSectionElement = (groupId: GroupId, group: Group, selectedItems: Ite
         {url ? <p>{url}</p> : null}
       </>
     ),
-    images: [<FileLoader onLoaded={(file) => onLoad(groupId, file)} />].concat(Object.keys(group.items).map((id, idx) => (
+    images: Object.keys(group.items).length > 0 ? (Object.keys(group.items).map((id, idx) => (
       <div key={idx} onClick={() => onSelect(id)}>
         <ImagePreview
           file={group.items[id].file}
           marked={selectedItems.includes(id)}
         />
       </div>
-    ))),
+    ))) : [
+      <p>Drag and drop files here</p>
+    ],
   }
 
-  return <GalleryViewLayout slots={slots} />
+  return (
+    <FileLoader onLoaded={(file) => onLoad(groupId, file)}>
+      <GalleryViewLayout slots={slots} />
+    </FileLoader>
+  )
 }
 
 function App() {

@@ -1,12 +1,13 @@
-import "./FileLoader.css"
+type Prop = { onLoaded: (files: File[]) => void }
 
-const FileLoader: React.FC<{ onLoaded: (files: File[]) => void }> = ({
-  onLoaded: onSelected,
+const FileLoader: React.FC<React.PropsWithChildren<Prop>> = ({
+  onLoaded,
+  children,
 }) => {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
-    onSelected && onSelected(files);
+    onLoaded(files);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -14,12 +15,8 @@ const FileLoader: React.FC<{ onLoaded: (files: File[]) => void }> = ({
   };
 
   return (
-    <div
-      className="file-selector"
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-    >
-      <p>Drag and drop files here</p>
+    <div onDrop={handleDrop} onDragOver={handleDragOver}>
+      {children}
     </div>
   );
 };
