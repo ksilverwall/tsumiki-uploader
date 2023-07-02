@@ -1,4 +1,4 @@
-type Prop = { onLoaded: (files: File[]) => void }
+type Prop = { onLoaded?: (files: File[]) => void }
 
 const FileLoader: React.FC<React.PropsWithChildren<Prop>> = ({
   onLoaded,
@@ -7,7 +7,7 @@ const FileLoader: React.FC<React.PropsWithChildren<Prop>> = ({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
-    onLoaded(files);
+    onLoaded && onLoaded(files);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {

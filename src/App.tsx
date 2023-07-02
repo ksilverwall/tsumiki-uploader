@@ -5,48 +5,11 @@ import reducer from "./reducer";
 import "./App.css";
 import Uploader from "./repositories/Uploader";
 import BackendSignedBufferUploader from "./repositories/BackendSignedBufferUploader";
-import GalleryViewLayout from "./GalleryViewLayout";
-import FileLoader from "./FileLoader";
-import ImagePreview from "./ImagePreview";
+import GalleryView, { GalleryViewProps } from "./GalleryView";
 
 function generateId<T extends string>(): T {
   const newId = uuidv7();
   return newId as T;
-}
-
-// selectedItems, onCreateGroup, onSelect, onLoad: EDITTING Only
-// url: COMPLETE Only
-const createSectionElement = (groupId: GroupId, group: Group, selectedItems: ItemId[], onSelect: (id: ItemId) => void, onCreateGroup: (groupId: GroupId, ids: ItemId[]) => void, onLoad: (groupId: GroupId, files: File[]) => void): JSX.Element => {
-  const url = group.state === 'COMPLETE' ? "http://example.com/download" : undefined;
-  const slots = {
-    header: (
-      <>
-        <p>{group.label}</p>
-        {
-          <button onClick={() => onCreateGroup(groupId, selectedItems)}>
-            New Group
-          </button>
-        }
-        {url ? <p>{url}</p> : null}
-      </>
-    ),
-    images: Object.keys(group.items).length > 0 ? (Object.keys(group.items).map((id, idx) => (
-      <div key={idx} onClick={() => onSelect(id)}>
-        <ImagePreview
-          file={group.items[id].file}
-          marked={selectedItems.includes(id)}
-        />
-      </div>
-    ))) : [
-      <p>Drag and drop files here</p>
-    ],
-  }
-
-  return (
-    <FileLoader onLoaded={(file) => onLoad(groupId, file)}>
-      <GalleryViewLayout slots={slots} />
-    </FileLoader>
-  )
 }
 
 function App() {
@@ -69,29 +32,12 @@ function App() {
     },
   });
 
-  const [selectedItems, setSelectedItems] = useState<ItemId[]>([]);
-
-  useEffect(() => {
-    setSelectedItems([]);
-  }, [viewGroupId]);
-
   useEffect(() => {
     const dict = Object.fromEntries(
       new URLSearchParams(location.search).entries()
     );
     setViewGroupId(dict["group"] ?? DEFAULT_GROUP_ID);
   }, [DEFAULT_GROUP_ID, location.search]);
-
-  const onSelect = useCallback(
-    (id: ItemId) => {
-      if (selectedItems.includes(id)) {
-        setSelectedItems(selectedItems.filter((v) => v !== id));
-      } else {
-        setSelectedItems(selectedItems.concat(id));
-      }
-    },
-    [selectedItems]
-  );
 
   const onLoad = useCallback(
     (groupId: GroupId, files: File[]) =>
@@ -163,8 +109,8 @@ function App() {
     <div style={{ display: "flex", flexDirection: "column" }}>
       {Object.keys(status.groups)
         .sort()
-        .map((groupId) => (
-          <button onClick={() => navigate(`?group=${groupId}`)}>
+        .map((groupId, idx) => (
+          <button key={idx} onClick={() => navigate(`?group=${groupId}`)}>
             <div style={{ display: "flex", flexDirection: "row" }}>
               <div>
                 <p>{`[${status.groups[groupId].state}]`}</p>
@@ -187,6 +133,25 @@ function App() {
 
   const archiveAllButton = <button onClick={onArchiveAll}>Archive All</button>;
 
+  if (!(viewGroupId && status.groups[viewGroupId])) {
+    return null;
+  }
+
+  const group = status.groups[viewGroupId];
+  const props: GalleryViewProps = group.state === "EDITING" ? {
+    ...group,
+    state: "EDITING",
+    onCreateGroup: (ids: GroupId[]) => onCreateGroup(viewGroupId, ids),
+    onLoad: (files: File[]) => onLoad(viewGroupId, files),
+  } : group.state === "ARCHIVING" ? {
+    ...group,
+    state: "ARCHIVING",
+  } : {
+    ...group,
+    state: "COMPLETE",
+    url: "http://example.com/download",
+  };
+
   return (
     <div>
       <header>
@@ -198,7 +163,7 @@ function App() {
           <div>{archiveAllButton}</div>
         </aside>
         <section className="main-section">
-          {(viewGroupId && status.groups[viewGroupId]) ? createSectionElement(viewGroupId, status.groups[viewGroupId], selectedItems, onSelect, onCreateGroup, onLoad) : null}
+          {(viewGroupId && status.groups[viewGroupId]) ? <GalleryView {...props} /> : null}
         </section>
       </div>
     </div>
