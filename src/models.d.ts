@@ -9,9 +9,13 @@ type Item = {
 
 type Group = {
   label: string;
-  state: GroupState;
   items: { [key: ItemId]: Item };
-};
+} & ({
+  state: "EDITING" | "ARCHIVING";
+} | {
+  state: "COMPLETE";
+  key: string;
+});
 
 type Status = {
   groups: { [key: GroupId]: Group };

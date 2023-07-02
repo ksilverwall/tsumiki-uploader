@@ -12,6 +12,10 @@ function generateId<T extends string>(): T {
   return newId as T;
 }
 
+function Never<T>(_: never[]): T {
+  throw new Error("assert never")
+}
+
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -139,18 +143,21 @@ function App() {
 
   const group = status.groups[viewGroupId];
   const props: GalleryViewProps = group.state === "EDITING" ? {
-    ...group,
+    label: group.label,
+    items: group.items,
     state: "EDITING",
     onCreateGroup: (ids: GroupId[]) => onCreateGroup(viewGroupId, ids),
-    onUpdateItems: (items: {[key: ItemId]: Item}) => onUpdateGroupItems(viewGroupId, items),
+    onUpdateItems: (items: { [key: ItemId]: Item }) => onUpdateGroupItems(viewGroupId, items),
   } : group.state === "ARCHIVING" ? {
-    ...group,
+    label: group.label,
+    items: group.items,
     state: "ARCHIVING",
-  } : {
-    ...group,
+  } : group.state === "COMPLETE" ? {
+    label: group.label,
+    items: group.items,
     state: "COMPLETE",
-    url: "http://example.com/download",
-  };
+    url: "http://example.com/download?key=" + group.key,
+  } : Never([group.state]);
 
   return (
     <div>

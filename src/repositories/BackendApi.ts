@@ -2,7 +2,7 @@ import { ApplicationError } from "./ApplicationError";
 import axios from "axios";
 
 export type Transaction = {
-  id: number;
+  id: string;
   url: string;
 }
 

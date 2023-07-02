@@ -9,7 +9,7 @@ function generateId<T extends string>(): T {
   return newId as T;
 }
 
-export type GalleryViewProps = Group & ({
+export type GalleryViewProps = { label: string; items: { [key: ItemId]: Item } } & ({
   state: "EDITING";
   onCreateGroup: (ids: ItemId[]) => void;
   onUpdateItems: (items: { [key: ItemId]: Item }) => void;
