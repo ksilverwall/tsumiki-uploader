@@ -1,7 +1,7 @@
 type LoadAction = {
-  type: "LOAD";
+  type: "SET_GROUP_ITEMS";
   groupId: GroupId;
-  items: { id: ItemId; file: File }[];
+  items: {[key: ItemId]: Item}
 };
 
 type CreateGroupAction = {

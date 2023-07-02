@@ -39,16 +39,12 @@ function App() {
     setViewGroupId(dict["group"] ?? DEFAULT_GROUP_ID);
   }, [DEFAULT_GROUP_ID, location.search]);
 
-  const onLoad = useCallback(
-    (groupId: GroupId, files: File[]) =>
-      dispatch({
-        type: "LOAD",
-        groupId: groupId,
-        items: files.map((f) => ({
-          id: generateId<ItemId>(),
-          file: f,
-        })),
-      }),
+  const onUpdateGroupItems = useCallback(
+    (groupId: GroupId, items: { [key: ItemId]: Item }) => dispatch({
+      type: "SET_GROUP_ITEMS",
+      groupId: groupId,
+      items: items,
+    }),
     []
   );
 
@@ -146,7 +142,7 @@ function App() {
     ...group,
     state: "EDITING",
     onCreateGroup: (ids: GroupId[]) => onCreateGroup(viewGroupId, ids),
-    onLoad: (files: File[]) => onLoad(viewGroupId, files),
+    onUpdateItems: (items: {[key: ItemId]: Item}) => onUpdateGroupItems(viewGroupId, items),
   } : group.state === "ARCHIVING" ? {
     ...group,
     state: "ARCHIVING",

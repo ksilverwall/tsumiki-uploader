@@ -2,11 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import GalleryViewLayout from "./GalleryViewLayout";
 import FileLoader from "./FileLoader";
 import ImagePreview from "./ImagePreview";
+import { uuidv7 } from "uuidv7";
+
+function generateId<T extends string>(): T {
+  const newId = uuidv7();
+  return newId as T;
+}
 
 export type GalleryViewProps = Group & ({
   state: "EDITING";
   onCreateGroup: (ids: ItemId[]) => void;
-  onLoad: (files: File[]) => void;
+  onUpdateItems: (items: { [key: ItemId]: Item }) => void;
 } | {
   state: "ARCHIVING";
 } | {
@@ -16,6 +22,7 @@ export type GalleryViewProps = Group & ({
 
 const GalleryView: React.FC<GalleryViewProps> = (props) => {
   const [selectedItems, setSelectedItems] = useState<ItemId[]>([]);
+  const [items, setItems] = useState<{ [key: ItemId]: Item }>({});
 
   const onSelect = useCallback(
     (id: ItemId) => {
@@ -27,6 +34,27 @@ const GalleryView: React.FC<GalleryViewProps> = (props) => {
     },
     [selectedItems]
   );
+
+  const onLoaded = useCallback((files: File[]) => {
+    const newItems = {
+      ...items,
+      ...Object.fromEntries(
+        files.map((f) => [
+          generateId<ItemId>(),
+          {
+            file: f,
+          },
+        ])
+      ),
+    }
+    setItems(newItems)
+  }, [])
+
+  useEffect(() => {
+    if (props.state === "EDITING") {
+      props.onUpdateItems(items)
+    }
+  }, [items]);
 
   useEffect(() => {
     setSelectedItems([]);
@@ -62,7 +90,7 @@ const GalleryView: React.FC<GalleryViewProps> = (props) => {
   ]
 
   return (
-    <FileLoader onLoaded={props.state === 'EDITING' ? props.onLoad : undefined}>
+    <FileLoader onLoaded={props.state === 'EDITING' ? onLoaded : undefined}>
       <GalleryViewLayout slots={{ header, images }} />
     </FileLoader>
   )

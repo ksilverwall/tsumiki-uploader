@@ -14,6 +14,11 @@ function mapDict<S>(
 
 const GroupReducer: Reducer<Group, Action> = (state, action) => {
   switch (action.type) {
+    case "SET_GROUP_ITEMS":
+      return {
+        ...state,
+        items: action.items,
+      };
     case "UPLOAD":
       return {
         ...state,
@@ -32,28 +37,6 @@ const GroupReducer: Reducer<Group, Action> = (state, action) => {
 
 const StatusReducer: Reducer<Status, Action> = (state, action) => {
   switch (action.type) {
-    case "LOAD":
-      return {
-        ...state,
-        groups: {
-          ...state.groups,
-          [action.groupId]: {
-            ...state.groups[action.groupId],
-            items: {
-              ...state.groups[action.groupId].items,
-              ...Object.fromEntries(
-                action.items.map((item) => [
-                  item.id,
-                  {
-                    file: item.file,
-                    marked: false,
-                  },
-                ])
-              ),
-            },
-          },
-        },
-      };
     case "CREATE_GROUP": {
       let groups: { [key: GroupId]: Group };
       const source = action.source;
@@ -102,12 +85,13 @@ const StatusReducer: Reducer<Status, Action> = (state, action) => {
         groups: mapDict(state.groups, (groupId, group) =>
           action.groupIds.includes(groupId)
             ? GroupReducer(group, {
-                type: "UPLOAD",
-                groupId,
-              })
+              type: "UPLOAD",
+              groupId,
+            })
             : group
         ),
       };
+    case "SET_GROUP_ITEMS":
     case "UPLOAD_COMPLETE":
       return {
         ...state,
