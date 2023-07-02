@@ -2,12 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import GalleryViewLayout from "./GalleryViewLayout";
 import FileLoader from "./FileLoader";
 import ImagePreview from "./ImagePreview";
-import { uuidv7 } from "uuidv7";
-
-function generateId<T extends string>(): T {
-  const newId = uuidv7();
-  return newId as T;
-}
+import { GenerateId } from "./libs";
 
 export type GalleryViewProps = { label: string; items: { [key: ItemId]: Item } } & ({
   state: "EDITING";
@@ -40,7 +35,7 @@ const GalleryView: React.FC<GalleryViewProps> = (props) => {
       ...items,
       ...Object.fromEntries(
         files.map((f) => [
-          generateId<ItemId>(),
+          GenerateId<ItemId>(),
           {
             file: f,
           },

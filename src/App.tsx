@@ -3,24 +3,23 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { uuidv7 } from "uuidv7";
 import reducer from "./reducer";
 import "./App.css";
-import Uploader from "./repositories/Uploader";
 import BackendSignedBufferUploader from "./repositories/BackendSignedBufferUploader";
 import GalleryView, { GalleryViewProps } from "./GalleryView";
-
-function generateId<T extends string>(): T {
-  const newId = uuidv7();
-  return newId as T;
-}
+import { ArchiveFiles, GenerateId } from "./libs";
 
 function Never<T>(_: never[]): T {
   throw new Error("assert never")
 }
 
-function App() {
+type Props = {
+  connector: BackendSignedBufferUploader;
+}
+
+function App({connector}: Props) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const DEFAULT_GROUP_ID = useMemo(() => generateId<GroupId>(), []);
+  const DEFAULT_GROUP_ID = useMemo(() => GenerateId<GroupId>(), []);
 
   const [promisePool, setPromisePool] = useState<
     { pid: string; promise: Promise<void> }[]
@@ -56,7 +55,7 @@ function App() {
     (groupId: GroupId, selectedItems: ItemId[]) => {
       dispatch({
         type: "CREATE_GROUP",
-        newGroupId: generateId<GroupId>(),
+        newGroupId: GenerateId<GroupId>(),
         source: {
           groupId: groupId,
           selected: selectedItems,
@@ -87,9 +86,7 @@ function App() {
         pid,
         promise: (async () => {
           try {
-            const key = await new Uploader(
-              new BackendSignedBufferUploader()
-            ).upload(files);
+            const key = await connector.upload(await ArchiveFiles(files));
             dispatch({
               type: "UPLOAD_COMPLETE",
               groupId: groupId,
@@ -127,7 +124,7 @@ function App() {
         ))}
       <button
         onClick={() =>
-          dispatch({ type: "CREATE_GROUP", newGroupId: generateId() })
+          dispatch({ type: "CREATE_GROUP", newGroupId: GenerateId() })
         }
       >
         +

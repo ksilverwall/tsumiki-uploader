@@ -1,16 +1,16 @@
 import { BackendApi } from "./BackendApi";
 import { S3SignedAccessor } from "./S3SignedAccessor";
-import { BufferUploader } from "./Uploader";
 
+type Accessor = {
+  backendApi: BackendApi;
+  s3Accessor: S3SignedAccessor;
+}
 
-export default class BackendSignedBufferUploader implements BufferUploader {
-  constructor() { }
+export default class BackendSignedBufferUploader {
+  constructor(private readonly accessor: Accessor) { }
   async upload(zipData: ArrayBuffer): Promise<string> {
-    const endPoint = import.meta.env.VITE_BACKEND_API_ENDPOINT;
-    const backendApi = new BackendApi(endPoint);
-    const s3 = new S3SignedAccessor();
-    const t = await backendApi.createTransaction();
-    await s3.put(t.url, zipData);
+    const t = await this.accessor.backendApi.createTransaction();
+    await this.accessor.s3Accessor.put(t.url, zipData);
 
     return t.id;
   }
