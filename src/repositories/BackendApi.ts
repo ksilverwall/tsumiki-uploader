@@ -1,10 +1,6 @@
+import { Transaction } from "../gen";
 import { ApplicationError } from "./ApplicationError";
 import axios from "axios";
-
-export type Transaction = {
-  id: string;
-  url: string;
-}
 
 export class BackendApi {
   constructor(private readonly endpointUrl: string) { }

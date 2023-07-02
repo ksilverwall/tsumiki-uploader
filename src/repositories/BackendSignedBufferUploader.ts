@@ -12,6 +12,6 @@ export default class BackendSignedBufferUploader implements BufferUploader {
     const t = await backendApi.createTransaction();
     await s3.put(t.url, zipData);
 
-    return t.id;
+    return `${t.id}`;
   }
 }
