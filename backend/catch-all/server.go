@@ -19,11 +19,11 @@ type Server struct {
 }
 
 func (s Server) CreateTransaction(ctx echo.Context) error {
-	u2, err := uuid.NewV7()
+	u7, err := uuid.NewV7()
 	svc := s3.New(s.AWSSession)
 	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
 		Bucket: aws.String(s.BucketName),
-		Key:    aws.String(fmt.Sprintf("%v.zip", u2)),
+		Key:    aws.String(fmt.Sprintf("%v.zip", u7)),
 	})
 	url, err := req.Presign(15 * time.Minute)
 	if err != nil {
@@ -31,7 +31,7 @@ func (s Server) CreateTransaction(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, openapi.Transaction{
-		Id:  0,
+		Id:  u7.String(),
 		Url: url,
 	})
 }
