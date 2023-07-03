@@ -17,4 +17,12 @@ export class BackendApi {
       throw new ApplicationError(`failed to createTransaction`, err);
     }
   }
+  async getDownloadUrl(_key: string): Promise<string> {
+    try {
+      // TODO: implement here
+      return "dummy-url";
+    } catch (err) {
+      throw new ApplicationError(`failed to getDownloadUrl`, err);
+    }
+  }
 }
