@@ -39,6 +39,8 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return events.APIGatewayProxyResponse{}, errors.New("Route not found")
 	}
 
+	ctx.Status.PathParams = route.Params
+
 	if err := route.Handler(ctx); err != nil {
 		return events.APIGatewayProxyResponse{}, err
 	}

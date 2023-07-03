@@ -13,7 +13,8 @@ import (
 )
 
 type ContextStatus struct {
-	Response *events.APIGatewayProxyResponse
+	Response   *events.APIGatewayProxyResponse
+	PathParams PathParams
 }
 
 type Context struct {
@@ -34,7 +35,7 @@ func (c Context) Scheme() string                  { c.non_implemented_method_cal
 func (c Context) RealIP() string                  { c.non_implemented_method_call(); return "" }
 func (c Context) Path() string                    { c.non_implemented_method_call(); return "" }
 func (c Context) SetPath(p string)                { c.non_implemented_method_call(); return }
-func (c Context) Param(name string) string        { c.non_implemented_method_call(); return "" }
+func (c Context) Param(name string) string        { v, _ := c.Status.PathParams[name]; return v }
 func (c Context) ParamNames() []string            { c.non_implemented_method_call(); return make([]string, 0) }
 func (c Context) SetParamNames(names ...string)   { c.non_implemented_method_call(); return }
 func (c Context) ParamValues() []string           { c.non_implemented_method_call(); return make([]string, 0) }
