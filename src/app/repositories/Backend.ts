@@ -16,10 +16,10 @@ export default class Backend implements BackendInterface {
     return t.id;
   }
   async download(key: string): Promise<void> {
-    const url = await this.accessor.backendApi.getDownloadUrl(key);
+    const info = await this.accessor.backendApi.getDownloadUrl(key);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = "dummy-file-name";
+    link.href = info.url;
+    link.download = info.name;
     link.click();
   }
 }
