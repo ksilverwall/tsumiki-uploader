@@ -22,7 +22,7 @@ type Router struct {
 func (r *Router) GetRoute(path, method string) *Route {
 	for _, m := range r.Map {
 		if m.Route.Path == path && m.Route.Method == method {
-			return &Route{Handler: r.Map[0].Handler}
+			return &Route{Handler: m.Handler}
 		}
 	}
 
