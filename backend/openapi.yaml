@@ -7,6 +7,29 @@ info:
 servers:
   - url: http://petstore.swagger.io/v1
 paths:
+  /storage/files/{key}:
+    get:
+      operationId: getFileUrl
+      parameters:
+        - in: path
+          name: key
+          description: User ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadInfo"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /storage/transactions:
     post:
       operationId: createTransaction
@@ -25,6 +48,16 @@ paths:
                 $ref: "#/components/schemas/Error"
 components:
   schemas:
+    DownloadInfo:
+      type: object
+      required:
+        - name
+        - url
+      properties:
+        name:
+          type: string
+        url:
+          type: string
     Transaction:
       type: object
       required:
