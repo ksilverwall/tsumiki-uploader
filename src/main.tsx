@@ -5,6 +5,7 @@ import { Router as RemixRouter } from "@remix-run/router";
 import App from "./App.tsx";
 import "./index.css";
 import { CreateConnector } from "./builder.ts";
+import DownloadPage from "./DownloadPage.tsx";
 
 type ApplicationConstants = {
   router: RemixRouter;
@@ -20,6 +21,10 @@ function init(): ApplicationConstants {
       {
         path: "/",
         element: <App connector={connector} />,
+      },
+      {
+        path: "/download",
+        element: <DownloadPage connector={connector} />,
       },
     ]);
 
