@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"catch-all/apigateway"
 
@@ -33,7 +34,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	ctx := apigateway.NewContext()
-	route := MainRouter.GetRoute(request.Path, request.HTTPMethod)
+	route := MainRouter.GetRoute(strings.TrimSuffix(request.Path, "/"), request.HTTPMethod)
 	if route == nil {
 		return events.APIGatewayProxyResponse{}, errors.New("Route not found")
 	}
