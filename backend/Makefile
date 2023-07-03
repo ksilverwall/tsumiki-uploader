@@ -1,19 +1,22 @@
 .DEFAULT_GOAL = build
 
+GEN_FILE_PATH=catch-all/gen/openapi
+
 .PHONY: build clean gen
 
-gen: catch-all/gen/openapi/openapi.gen.go
+gen: ${GEN_FILE_PATH}/server.gen.go ${GEN_FILE_PATH}/types.gen.go
 
-build: catch-all/gen/openapi/openapi.gen.go
+build:
 	sam build
 
 clean:
 	- rm -rf .aws-sam
 	- rm -rf catch-all/gen/
 
-catch-all/gen/openapi/openapi.gen.go:
+${GEN_FILE_PATH}/server.gen.go: openapi.yaml
 	mkdir -p catch-all/gen/openapi/
-	oapi-codegen -package openapi -generate "types" openapi.yaml > catch-all/gen/openapi/types.gen.go
-	oapi-codegen -package openapi -generate "client" openapi.yaml > catch-all/gen/openapi/client.gen.go
-	oapi-codegen -package openapi -generate "server" openapi.yaml > catch-all/gen/openapi/server.gen.go
-	oapi-codegen -package openapi -generate "spec" openapi.yaml > catch-all/gen/openapi/spec.gen.go
+	oapi-codegen -package openapi -generate "server" openapi.yaml > ${GEN_FILE_PATH}/server.gen.go
+
+${GEN_FILE_PATH}/types.gen.go: openapi.yaml
+	mkdir -p catch-all/gen/openapi/
+	oapi-codegen -package openapi -generate "types" openapi.yaml > ${GEN_FILE_PATH}/types.gen.go
