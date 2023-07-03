@@ -12,7 +12,7 @@ export type GalleryViewProps = { label: string; items: { [key: ItemId]: Item } }
   state: "ARCHIVING";
 } | {
   state: "COMPLETE";
-  url: string;
+  url: URL;
 })
 
 const GalleryView: React.FC<GalleryViewProps> = (props) => {
@@ -69,7 +69,7 @@ const GalleryView: React.FC<GalleryViewProps> = (props) => {
   ) : (
     <div>
       {title}
-      <p>{props.url}</p>
+      <p>{props.url.toString()}</p>
     </div>
   );
 

@@ -153,7 +153,7 @@ function App({connector}: Props) {
     label: group.label,
     items: group.items,
     state: "COMPLETE",
-    url: "http://example.com/download?key=" + group.key,
+    url: new URL(window.location.origin + '/download?key=' + group.key),
   } : Never([group.state]);
 
   return (
