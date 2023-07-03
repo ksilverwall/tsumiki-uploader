@@ -1,4 +1,3 @@
-import { BackendInterface } from "../interface";
 import { BackendApi } from "./BackendApi";
 import { S3SignedAccessor } from "./S3SignedAccessor";
 
@@ -7,7 +6,7 @@ type Accessor = {
   s3Accessor: S3SignedAccessor;
 }
 
-export default class Backend implements BackendInterface {
+export default class Backend {
   constructor(private readonly accessor: Accessor) { }
   async upload(zipData: ArrayBuffer): Promise<string> {
     const t = await this.accessor.backendApi.createTransaction();

@@ -3,19 +3,19 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { uuidv7 } from "uuidv7";
 import reducer from "../app/reducer";
 import "./UploadPage.css";
-import BackendSignedBufferUploader from "../app/repositories/BackendSignedBufferUploader";
 import GalleryView, { GalleryViewProps } from "./GalleryView";
 import { ArchiveFiles, GenerateId } from "../app/libs";
+import { Context } from "../app/context";
 
 function Never<T>(_: never[]): T {
   throw new Error("assert never")
 }
 
 type Props = {
-  connector: BackendSignedBufferUploader;
+  context: Context;
 }
 
-function App({connector}: Props) {
+function UploadPage({context}: Props) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -86,7 +86,7 @@ function App({connector}: Props) {
         pid,
         promise: (async () => {
           try {
-            const key = await connector.upload(await ArchiveFiles(files));
+            const key = await context.backend.upload(await ArchiveFiles(files));
             dispatch({
               type: "UPLOAD_COMPLETE",
               groupId: groupId,
@@ -174,4 +174,4 @@ function App({connector}: Props) {
   );
 }
 
-export default App;
+export default UploadPage;

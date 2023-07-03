@@ -2,10 +2,11 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { Router as RemixRouter } from "@remix-run/router";
-import App from "./components/UploadPage.tsx";
+import UploadPage from "./components/UploadPage.tsx";
 import "./index.css";
 import { CreateConnector } from "./app/builder.ts";
 import DownloadPage from "./components/DownloadPage.tsx";
+import { Context } from "./app/context.ts";
 
 type ApplicationConstants = {
   router: RemixRouter;
@@ -16,15 +17,17 @@ type ApplicationConstants = {
 
 function init(): ApplicationConstants {
   try {
-    const connector = CreateConnector()
+    const c: Context = {
+      backend: CreateConnector()
+    }
     const router = createBrowserRouter([
       {
         path: "/",
-        element: <App connector={connector} />,
+        element: <UploadPage context={c} />,
       },
       {
         path: "/download",
-        element: <DownloadPage connector={connector} />,
+        element: <DownloadPage context={c} />,
       },
     ]);
 

@@ -1,5 +1,7 @@
-import BackendSignedBufferUploader from "../app/repositories/BackendSignedBufferUploader";
+import { Context } from "../app/context";
 
-export default function DownloadPage(_: { connector: BackendSignedBufferUploader }) {
+const DownloadPage: React.FC<{context: Context}> = () => {
   return <p>Not Implemented</p>
 }
+
+export default DownloadPage;
