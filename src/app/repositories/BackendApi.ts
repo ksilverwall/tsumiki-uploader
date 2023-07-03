@@ -1,4 +1,4 @@
-import { Transaction } from "../gen";
+import { Transaction } from "../../gen";
 import { ApplicationError } from "./ApplicationError";
 import axios from "axios";
 

@@ -2,10 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { Router as RemixRouter } from "@remix-run/router";
-import App from "./App.tsx";
+import App from "./components/UploadPage.tsx";
 import "./index.css";
-import { CreateConnector } from "./builder.ts";
-import DownloadPage from "./DownloadPage.tsx";
+import { CreateConnector } from "./app/builder.ts";
+import DownloadPage from "./components/DownloadPage.tsx";
 
 type ApplicationConstants = {
   router: RemixRouter;

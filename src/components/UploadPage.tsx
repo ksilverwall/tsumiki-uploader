@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { uuidv7 } from "uuidv7";
-import reducer from "./reducer";
-import "./App.css";
-import BackendSignedBufferUploader from "./repositories/BackendSignedBufferUploader";
+import reducer from "../app/reducer";
+import "./UploadPage.css";
+import BackendSignedBufferUploader from "../app/repositories/BackendSignedBufferUploader";
 import GalleryView, { GalleryViewProps } from "./GalleryView";
-import { ArchiveFiles, GenerateId } from "./libs";
+import { ArchiveFiles, GenerateId } from "../app/libs";
 
 function Never<T>(_: never[]): T {
   throw new Error("assert never")

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import GalleryViewLayout from "./GalleryViewLayout";
 import FileLoader from "./FileLoader";
 import ImagePreview from "./ImagePreview";
-import { GenerateId } from "./libs";
+import { GenerateId } from "../app/libs";
 
 export type GalleryViewProps = { label: string; items: { [key: ItemId]: Item } } & ({
   state: "EDITING";
