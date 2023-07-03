@@ -35,3 +35,20 @@ func (s Server) CreateTransaction(ctx echo.Context) error {
 		Url: url,
 	})
 }
+
+func (s Server) GetFileUrl(ctx echo.Context, key string) error {
+	svc := s3.New(s.AWSSession)
+	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(s.BucketName),
+		Key:    aws.String(fmt.Sprintf("%v.zip", key)),
+	})
+	url, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		panic(err)
+	}
+
+	return ctx.JSON(http.StatusOK, openapi.DownloadInfo{
+		Name: "dummy_name.zip",
+		Url:  url,
+	})
+}

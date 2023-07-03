@@ -4,11 +4,18 @@
 package openapi
 
 import (
+	"fmt"
+	"net/http"
+
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/labstack/echo/v4"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
+	// (GET /storage/files/{key})
+	GetFileUrl(ctx echo.Context, key string) error
 
 	// (POST /storage/transactions)
 	CreateTransaction(ctx echo.Context) error
@@ -17,6 +24,22 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// GetFileUrl converts echo context to params.
+func (w *ServerInterfaceWrapper) GetFileUrl(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "key" -------------
+	var key string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "key", runtime.ParamLocationPath, ctx.Param("key"), &key)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter key: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetFileUrl(ctx, key)
+	return err
 }
 
 // CreateTransaction converts echo context to params.
@@ -56,6 +79,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/storage/files/:key", wrapper.GetFileUrl)
 	router.POST(baseURL+"/storage/transactions", wrapper.CreateTransaction)
 
 }

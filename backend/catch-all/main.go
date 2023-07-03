@@ -39,6 +39,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	if err := route.Handler(ctx); err != nil {
+		// ERROR: Invalid format for parameter key: parameter 'key' is empty, can't bind its value
 		return events.APIGatewayProxyResponse{}, err
 	}
 
