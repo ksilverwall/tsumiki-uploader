@@ -1,4 +1,4 @@
-import { Transaction } from "../../gen";
+import { DownloadInfo, Transaction } from "../../gen";
 import { ApplicationError } from "./ApplicationError";
 import axios from "axios";
 
@@ -17,10 +17,15 @@ export class BackendApi {
       throw new ApplicationError(`failed to createTransaction`, err);
     }
   }
-  async getDownloadUrl(_key: string): Promise<string> {
+  async getDownloadUrl(key: string): Promise<DownloadInfo> {
     try {
-      // TODO: implement here
-      return "dummy-url";
+      const response = await axios.get(`${this.endpointUrl}/storage/files/${key}`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      return response.data as DownloadInfo;
     } catch (err) {
       throw new ApplicationError(`failed to getDownloadUrl`, err);
     }

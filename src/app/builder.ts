@@ -1,5 +1,5 @@
 import { BackendApi } from "./repositories/BackendApi";
-import Backend from "./repositories/BackendSignedBufferUploader";
+import Backend from "./repositories/Backend";
 import { S3SignedAccessor } from "./repositories/S3SignedAccessor";
 
 export function CreateConnector(): Backend {
