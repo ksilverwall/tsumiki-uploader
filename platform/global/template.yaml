@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Tsunmiki Uploader Platform
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: Domain name
+  HostedZoneId:
+    Type: String
+    Description: Route 53 Hosted Zone ID
+
+Resources:
+  ServiceCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+
+Outputs:
+  ServiceCertificateArn:
+    Value: !Ref ServiceCertificate
+    Description: ARN of the service certificate
