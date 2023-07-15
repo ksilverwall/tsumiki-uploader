@@ -101,11 +101,48 @@ export interface Transaction {
     'id': string;
     /**
      * 
+     * @type {TransactionStatus}
+     * @memberof Transaction
+     */
+    'status': TransactionStatus;
+    /**
+     * 
      * @type {string}
      * @memberof Transaction
      */
     'url': string;
 }
+
+
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const TransactionStatus = {
+    Ready: 'READY',
+    Uploaded: 'UPLOADED'
+} as const;
+
+export type TransactionStatus = typeof TransactionStatus[keyof typeof TransactionStatus];
+
+
+/**
+ * 
+ * @export
+ * @interface UpdateTransactionRequest
+ */
+export interface UpdateTransactionRequest {
+    /**
+     * 
+     * @type {TransactionStatus}
+     * @memberof UpdateTransactionRequest
+     */
+    'status': TransactionStatus;
+}
+
+
 
 /**
  * DefaultApi - axios parameter creator
@@ -119,7 +156,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @throws {RequiredError}
          */
         createTransaction: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/storage/transactions`;
+            const localVarPath = `/transactions/storing_file`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -208,6 +245,43 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {string} transactionId target transaction
+         * @param {UpdateTransactionRequest} [updateTransactionRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateTransaction: async (transactionId: string, updateTransactionRequest?: UpdateTransactionRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'transactionId' is not null or undefined
+            assertParamExists('updateTransaction', 'transactionId', transactionId)
+            const localVarPath = `/transactions/storing_file/{transaction_id}`
+                .replace(`{${"transaction_id"}}`, encodeURIComponent(String(transactionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(updateTransactionRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -247,6 +321,17 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getFileUrl(key, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
+        /**
+         * 
+         * @param {string} transactionId target transaction
+         * @param {UpdateTransactionRequest} [updateTransactionRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateTransaction(transactionId: string, updateTransactionRequest?: UpdateTransactionRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Transaction>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateTransaction(transactionId, updateTransactionRequest, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
     }
 };
 
@@ -282,6 +367,16 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         getFileUrl(key: string, options?: any): AxiosPromise<DownloadInfo> {
             return localVarFp.getFileUrl(key, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} transactionId target transaction
+         * @param {UpdateTransactionRequest} [updateTransactionRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateTransaction(transactionId: string, updateTransactionRequest?: UpdateTransactionRequest, options?: any): AxiosPromise<Transaction> {
+            return localVarFp.updateTransaction(transactionId, updateTransactionRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -323,6 +418,18 @@ export class DefaultApi extends BaseAPI {
      */
     public getFileUrl(key: string, options?: AxiosRequestConfig) {
         return DefaultApiFp(this.configuration).getFileUrl(key, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} transactionId target transaction
+     * @param {UpdateTransactionRequest} [updateTransactionRequest] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public updateTransaction(transactionId: string, updateTransactionRequest?: UpdateTransactionRequest, options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).updateTransaction(transactionId, updateTransactionRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
