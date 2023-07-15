@@ -45,6 +45,32 @@ export interface DownloadInfo {
 /**
  * 
  * @export
+ * @interface FileThumbnail
+ */
+export interface FileThumbnail {
+    /**
+     * 
+     * @type {string}
+     * @memberof FileThumbnail
+     */
+    'url': string;
+}
+/**
+ * 
+ * @export
+ * @interface FileThumbnails
+ */
+export interface FileThumbnails {
+    /**
+     * 
+     * @type {Array<FileThumbnail>}
+     * @memberof FileThumbnails
+     */
+    'items': Array<FileThumbnail>;
+}
+/**
+ * 
+ * @export
  * @interface ModelError
  */
 export interface ModelError {
@@ -122,6 +148,39 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        getFileThumbnailUrls: async (key: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'key' is not null or undefined
+            assertParamExists('getFileThumbnailUrls', 'key', key)
+            const localVarPath = `/storage/files/{key}/thumbnails`
+                .replace(`{${"key"}}`, encodeURIComponent(String(key)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} key User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         getFileUrl: async (key: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'key' is not null or undefined
             assertParamExists('getFileUrl', 'key', key)
@@ -174,6 +233,16 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        async getFileThumbnailUrls(key: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FileThumbnails>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getFileThumbnailUrls(key, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {string} key User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         async getFileUrl(key: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DownloadInfo>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getFileUrl(key, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
@@ -202,6 +271,15 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
+        getFileThumbnailUrls(key: string, options?: any): AxiosPromise<FileThumbnails> {
+            return localVarFp.getFileThumbnailUrls(key, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} key User ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
         getFileUrl(key: string, options?: any): AxiosPromise<DownloadInfo> {
             return localVarFp.getFileUrl(key, options).then((request) => request(axios, basePath));
         },
@@ -223,6 +301,17 @@ export class DefaultApi extends BaseAPI {
      */
     public createTransaction(options?: AxiosRequestConfig) {
         return DefaultApiFp(this.configuration).createTransaction(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} key User ID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public getFileThumbnailUrls(key: string, options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).getFileThumbnailUrls(key, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

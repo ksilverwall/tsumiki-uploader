@@ -15,6 +15,16 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// FileThumbnail defines model for FileThumbnail.
+type FileThumbnail struct {
+	Url string `json:"url"`
+}
+
+// FileThumbnails defines model for FileThumbnails.
+type FileThumbnails struct {
+	Items []FileThumbnail `json:"items"`
+}
+
 // Transaction defines model for Transaction.
 type Transaction struct {
 	Id  string `json:"id"`

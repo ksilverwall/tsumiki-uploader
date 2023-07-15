@@ -22,4 +22,9 @@ export default class Backend implements BackendInterface {
     link.download = info.name;
     link.click();
   }
+  async getThumbnailUrl(key: string): Promise<string[]> {
+    const info = await this.accessor.backendApi.getThumbnailUrls(key);
+
+    return info.items.map((item)=>item.url)
+  }
 }

@@ -1,4 +1,4 @@
-import { DownloadInfo, Transaction } from "../../gen";
+import { DownloadInfo, FileThumbnails, Transaction } from "../../gen";
 import { ApplicationError } from "./ApplicationError";
 import axios from "axios";
 
@@ -26,6 +26,20 @@ export class BackendApi {
       });
 
       return response.data as DownloadInfo;
+    } catch (err) {
+      throw new ApplicationError(`failed to getDownloadUrl`, err);
+    }
+  }
+
+  async getThumbnailUrls(key: string): Promise<FileThumbnails> {
+    try {
+      const response = await axios.get(`${this.endpointUrl}/storage/files/${key}/thumnails`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      return response.data as FileThumbnails;
     } catch (err) {
       throw new ApplicationError(`failed to getDownloadUrl`, err);
     }

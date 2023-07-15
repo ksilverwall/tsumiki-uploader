@@ -5,7 +5,7 @@ info:
   license:
     name: MIT
 servers:
-  - url: http://petstore.swagger.io/v1
+  - url: http://example.com/v1
 paths:
   /storage/files/{key}:
     get:
@@ -30,6 +30,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /storage/files/{key}/thumbnails:
+    get:
+      operationId: getFileThumbnailUrls
+      parameters:
+        - in: path
+          name: key
+          description: User ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileThumbnails"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /storage/transactions:
     post:
       operationId: createTransaction
@@ -48,11 +71,29 @@ paths:
                 $ref: "#/components/schemas/Error"
 components:
   schemas:
+    FileThumbnail:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+    FileThumbnails:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            $ref: "#/components/schemas/FileThumbnail"
     DownloadInfo:
       type: object
       required:
         - name
         - url
+        - thumbnails
       properties:
         name:
           type: string

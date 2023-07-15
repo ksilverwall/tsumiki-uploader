@@ -17,6 +17,9 @@ type ServerInterface interface {
 	// (GET /storage/files/{key})
 	GetFileUrl(ctx echo.Context, key string) error
 
+	// (GET /storage/files/{key}/thumbnails)
+	GetFileThumbnailUrls(ctx echo.Context, key string) error
+
 	// (POST /storage/transactions)
 	CreateTransaction(ctx echo.Context) error
 }
@@ -39,6 +42,22 @@ func (w *ServerInterfaceWrapper) GetFileUrl(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetFileUrl(ctx, key)
+	return err
+}
+
+// GetFileThumbnailUrls converts echo context to params.
+func (w *ServerInterfaceWrapper) GetFileThumbnailUrls(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "key" -------------
+	var key string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "key", runtime.ParamLocationPath, ctx.Param("key"), &key)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter key: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetFileThumbnailUrls(ctx, key)
 	return err
 }
 
@@ -80,6 +99,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.GET(baseURL+"/storage/files/:key", wrapper.GetFileUrl)
+	router.GET(baseURL+"/storage/files/:key/thumbnails", wrapper.GetFileThumbnailUrls)
 	router.POST(baseURL+"/storage/transactions", wrapper.CreateTransaction)
 
 }
