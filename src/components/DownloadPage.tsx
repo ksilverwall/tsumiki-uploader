@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Context } from "../app/context";
 import ImagePreview from "./ImagePreview";
+import { ApplicationError } from "../app/repositories/ApplicationError";
 
 const DownloadPage: React.FC<{ context: Context }> = ({ context }) => {
   const location = useLocation();
@@ -26,17 +27,18 @@ const DownloadPage: React.FC<{ context: Context }> = ({ context }) => {
     }
   }, []);
 
-  useEffect(() => {
-    if (!key) { return }
-
-    const func = async () => {
-      try {
-        setUrls(await context.backend.getThumbnailUrl(key));
-      } catch (err) {
-        setAsyncError(err)
-      }
+  const loadThumbnailUrlAsync = useCallback(async (key: string) => {
+    try {
+      setUrls(await context.backend.getThumbnailUrl(key));
+    } catch (err) {
+      setAsyncError(err)
     }
-    func()
+  }, [])
+
+  useEffect(() => {
+    if (key) {
+      loadThumbnailUrlAsync(key)
+    }
   }, [key])
 
   if (!key) {
@@ -48,7 +50,7 @@ const DownloadPage: React.FC<{ context: Context }> = ({ context }) => {
       {asyncError ? <p>{`${asyncError}`}</p> : null}
       <button onClick={() => downloadAsync(key)}>Download</button>
       {
-        urls.map((u, idx) => (<div key={idx}><ImagePreview src={u}/></div>))
+        urls.map((u, idx) => (<div key={idx}><ImagePreview src={u} /></div>))
       }
     </div>
   )

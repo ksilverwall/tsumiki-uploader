@@ -3,7 +3,9 @@ import { AxiosError } from "axios";
 export const StringifyGeneralError = (err: Error): string => {
   if (err instanceof AxiosError) {
     if (err.response) {
-      return `AxiosError with response status ${err.response.status}, body is "${err.response.data}"`;
+      const body = err.response.data instanceof Object ? JSON.stringify(err.response.data) : err.response.data;
+
+      return `AxiosError with response status ${err.response.status}, body is '${body}'`;
     } if (err.request) {
       return `AxiosError with message: ${JSON.stringify(err.toJSON())}`;
     }
