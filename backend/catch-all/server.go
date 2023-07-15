@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
 )
 
 type Server struct {
@@ -18,7 +18,7 @@ type Server struct {
 	BucketName string
 }
 
-func (s Server) CreateTransaction(ctx echo.Context) error {
+func (s Server) CreateTransaction(ctx *gin.Context) {
 	u7, err := uuid.NewV7()
 	svc := s3.New(s.AWSSession)
 	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
@@ -30,13 +30,13 @@ func (s Server) CreateTransaction(ctx echo.Context) error {
 		panic(err)
 	}
 
-	return ctx.JSON(http.StatusOK, openapi.Transaction{
+	ctx.JSON(http.StatusOK, openapi.Transaction{
 		Id:  u7.String(),
 		Url: url,
 	})
 }
 
-func (s Server) GetFileUrl(ctx echo.Context, key string) error {
+func (s Server) GetFileUrl(ctx *gin.Context, key string) {
 	svc := s3.New(s.AWSSession)
 	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(s.BucketName),
@@ -47,13 +47,13 @@ func (s Server) GetFileUrl(ctx echo.Context, key string) error {
 		panic(err)
 	}
 
-	return ctx.JSON(http.StatusOK, openapi.DownloadInfo{
+	ctx.JSON(http.StatusOK, openapi.DownloadInfo{
 		Name: "dummy_name.zip",
 		Url:  url,
 	})
 }
 
-func (s Server) GetFileThumbnailUrls(ctx echo.Context, key string) error {
+func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 	svc := s3.New(s.AWSSession)
 	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(s.BucketName),
@@ -64,7 +64,7 @@ func (s Server) GetFileThumbnailUrls(ctx echo.Context, key string) error {
 		panic(err)
 	}
 
-	return ctx.JSON(http.StatusOK, openapi.FileThumbnails{
+	ctx.JSON(http.StatusOK, openapi.FileThumbnails{
 		Items: []openapi.FileThumbnail{
 			{
 				Url: url,

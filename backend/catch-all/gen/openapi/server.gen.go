@@ -8,98 +8,120 @@ import (
 	"net/http"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/labstack/echo/v4"
+	"github.com/gin-gonic/gin"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
 	// (GET /storage/files/{key})
-	GetFileUrl(ctx echo.Context, key string) error
+	GetFileUrl(c *gin.Context, key string)
 
 	// (GET /storage/files/{key}/thumbnails)
-	GetFileThumbnailUrls(ctx echo.Context, key string) error
+	GetFileThumbnailUrls(c *gin.Context, key string)
 
 	// (POST /storage/transactions)
-	CreateTransaction(ctx echo.Context) error
+	CreateTransaction(c *gin.Context)
 }
 
-// ServerInterfaceWrapper converts echo contexts to parameters.
+// ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler ServerInterface
+	Handler            ServerInterface
+	HandlerMiddlewares []MiddlewareFunc
+	ErrorHandler       func(*gin.Context, error, int)
 }
 
-// GetFileUrl converts echo context to params.
-func (w *ServerInterfaceWrapper) GetFileUrl(ctx echo.Context) error {
+type MiddlewareFunc func(c *gin.Context)
+
+// GetFileUrl operation middleware
+func (siw *ServerInterfaceWrapper) GetFileUrl(c *gin.Context) {
+
 	var err error
+
 	// ------------- Path parameter "key" -------------
 	var key string
 
-	err = runtime.BindStyledParameterWithLocation("simple", false, "key", runtime.ParamLocationPath, ctx.Param("key"), &key)
+	err = runtime.BindStyledParameter("simple", false, "key", c.Param("key"), &key)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter key: %s", err))
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter key: %s", err), http.StatusBadRequest)
+		return
 	}
 
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetFileUrl(ctx, key)
-	return err
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFileUrl(c, key)
 }
 
-// GetFileThumbnailUrls converts echo context to params.
-func (w *ServerInterfaceWrapper) GetFileThumbnailUrls(ctx echo.Context) error {
+// GetFileThumbnailUrls operation middleware
+func (siw *ServerInterfaceWrapper) GetFileThumbnailUrls(c *gin.Context) {
+
 	var err error
+
 	// ------------- Path parameter "key" -------------
 	var key string
 
-	err = runtime.BindStyledParameterWithLocation("simple", false, "key", runtime.ParamLocationPath, ctx.Param("key"), &key)
+	err = runtime.BindStyledParameter("simple", false, "key", c.Param("key"), &key)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter key: %s", err))
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter key: %s", err), http.StatusBadRequest)
+		return
 	}
 
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetFileThumbnailUrls(ctx, key)
-	return err
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFileThumbnailUrls(c, key)
 }
 
-// CreateTransaction converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateTransaction(ctx echo.Context) error {
-	var err error
+// CreateTransaction operation middleware
+func (siw *ServerInterfaceWrapper) CreateTransaction(c *gin.Context) {
 
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.CreateTransaction(ctx)
-	return err
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateTransaction(c)
 }
 
-// This is a simple interface which specifies echo.Route addition functions which
-// are present on both echo.Echo and echo.Group, since we want to allow using
-// either of them for path registration
-type EchoRouter interface {
-	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+// GinServerOptions provides options for the Gin server.
+type GinServerOptions struct {
+	BaseURL      string
+	Middlewares  []MiddlewareFunc
+	ErrorHandler func(*gin.Context, error, int)
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlers(router gin.IRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, GinServerOptions{})
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
-func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) {
+	errorHandler := options.ErrorHandler
+	if errorHandler == nil {
+		errorHandler = func(c *gin.Context, err error, statusCode int) {
+			c.JSON(statusCode, gin.H{"msg": err.Error()})
+		}
+	}
 
 	wrapper := ServerInterfaceWrapper{
-		Handler: si,
+		Handler:            si,
+		HandlerMiddlewares: options.Middlewares,
+		ErrorHandler:       errorHandler,
 	}
 
-	router.GET(baseURL+"/storage/files/:key", wrapper.GetFileUrl)
-	router.GET(baseURL+"/storage/files/:key/thumbnails", wrapper.GetFileThumbnailUrls)
-	router.POST(baseURL+"/storage/transactions", wrapper.CreateTransaction)
-
+	router.GET(options.BaseURL+"/storage/files/:key", wrapper.GetFileUrl)
+	router.GET(options.BaseURL+"/storage/files/:key/thumbnails", wrapper.GetFileThumbnailUrls)
+	router.POST(options.BaseURL+"/storage/transactions", wrapper.CreateTransaction)
 }

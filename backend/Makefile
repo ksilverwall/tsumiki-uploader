@@ -15,7 +15,7 @@ clean:
 
 ${GEN_FILE_PATH}/server.gen.go: openapi.yaml
 	mkdir -p catch-all/gen/openapi/
-	oapi-codegen -package openapi -generate "server" openapi.yaml > ${GEN_FILE_PATH}/server.gen.go
+	oapi-codegen -package openapi -generate "gin" openapi.yaml > ${GEN_FILE_PATH}/server.gen.go
 
 ${GEN_FILE_PATH}/types.gen.go: openapi.yaml
 	mkdir -p catch-all/gen/openapi/
