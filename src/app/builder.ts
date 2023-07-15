@@ -1,4 +1,4 @@
-import { BackendApi } from "./repositories/BackendApi";
+import { Configuration, DefaultApi } from "../gen";
 import Backend from "./repositories/Backend";
 import { S3SignedAccessor } from "./repositories/S3SignedAccessor";
 
@@ -9,7 +9,7 @@ export function CreateConnector(): Backend {
   }
 
   return new Backend({
-    backendApi: new BackendApi(import.meta.env.VITE_BACKEND_API_ENDPOINT),
+    backendApi: new DefaultApi(new Configuration({ basePath: import.meta.env.VITE_BACKEND_API_ENDPOINT })),
     s3Accessor: new S3SignedAccessor(),
   })
 }
