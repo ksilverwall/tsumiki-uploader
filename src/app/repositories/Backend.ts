@@ -1,4 +1,4 @@
-import { BackendInterface } from "../interface";
+import { BackendInterface, DownloadInfo } from "../interface";
 import { BackendApi } from "./BackendApi";
 import { S3SignedAccessor } from "./S3SignedAccessor";
 
@@ -15,12 +15,9 @@ export default class Backend implements BackendInterface {
 
     return t.id;
   }
-  async download(key: string): Promise<void> {
+  async download(key: string): Promise<DownloadInfo> {
     const info = await this.accessor.backendApi.getDownloadUrl(key);
-    const link = document.createElement('a');
-    link.href = info.url;
-    link.download = info.name;
-    link.click();
+    return info
   }
   async getThumbnailUrl(key: string): Promise<string[]> {
     const info = await this.accessor.backendApi.getThumbnailUrls(key);

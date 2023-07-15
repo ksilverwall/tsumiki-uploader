@@ -76,7 +76,8 @@ const GalleryView: React.FC<GalleryViewProps> = (props) => {
   const images = Object.keys(props.items).length > 0 ? (Object.keys(props.items).map((id, idx) => (
     <div key={idx} onClick={props.state === 'EDITING' ? () => onSelect(id) : undefined}>
       <ImagePreview
-        file={props.items[id].file}
+        src={props.items[id].file.type.startsWith("image/") ? URL.createObjectURL(props.items[id].file) : "xxxxx"}
+        alt={props.items[id].file.name}
         marked={props.state === 'EDITING' ? selectedItems.includes(id) : false}
       />
     </div>

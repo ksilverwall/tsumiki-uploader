@@ -33,7 +33,7 @@ export class BackendApi {
 
   async getThumbnailUrls(key: string): Promise<FileThumbnails> {
     try {
-      const response = await axios.get(`${this.endpointUrl}/storage/files/${key}/thumnails`, {
+      const response = await axios.get(`${this.endpointUrl}/storage/files/${key}/thumbnails`, {
         headers: {
           'Content-Type': 'application/json'
         }
