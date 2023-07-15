@@ -20,8 +20,11 @@ type ServerInterface interface {
 	// (GET /storage/files/{key}/thumbnails)
 	GetFileThumbnailUrls(c *gin.Context, key string)
 
-	// (POST /storage/transactions)
+	// (POST /transactions/storing_file)
 	CreateTransaction(c *gin.Context)
+
+	// (PATCH /transactions/storing_file/{transaction_id})
+	UpdateTransaction(c *gin.Context, transactionId string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -94,6 +97,30 @@ func (siw *ServerInterfaceWrapper) CreateTransaction(c *gin.Context) {
 	siw.Handler.CreateTransaction(c)
 }
 
+// UpdateTransaction operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTransaction(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "transaction_id" -------------
+	var transactionId string
+
+	err = runtime.BindStyledParameter("simple", false, "transaction_id", c.Param("transaction_id"), &transactionId)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter transaction_id: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateTransaction(c, transactionId)
+}
+
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -123,5 +150,6 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 
 	router.GET(options.BaseURL+"/storage/files/:key", wrapper.GetFileUrl)
 	router.GET(options.BaseURL+"/storage/files/:key/thumbnails", wrapper.GetFileThumbnailUrls)
-	router.POST(options.BaseURL+"/storage/transactions", wrapper.CreateTransaction)
+	router.POST(options.BaseURL+"/transactions/storing_file", wrapper.CreateTransaction)
+	router.PATCH(options.BaseURL+"/transactions/storing_file/:transaction_id", wrapper.UpdateTransaction)
 }

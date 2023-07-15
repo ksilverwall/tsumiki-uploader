@@ -34,6 +34,7 @@ func (s Server) CreateTransaction(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, openapi.Transaction{
 		Id:  u7.String(),
+		Status: openapi.READY,
 		Url: url,
 	})
 }
@@ -81,6 +82,10 @@ func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 	ctx.JSON(http.StatusOK, openapi.FileThumbnails{
 		Items: items,
 	})
+}
+
+func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
+	ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: "not implemented"})
 }
 
 func LoadThumbnailPaths(svc *s3.S3, bucketName, key string) ([]string, error) {
