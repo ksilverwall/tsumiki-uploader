@@ -53,12 +53,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /storage/transactions:
+  /transactions/storing_file:
     post:
       operationId: createTransaction
       responses:
-        '200':
-          description: A paged array of pets
+        '201':
+          description: created transaction info
           content:
             application/json:
               schema:
@@ -69,6 +69,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /transactions/storing_file/{transaction_id}:
+    patch:
+      operationId: updateTransaction
+      parameters:
+        - in: path
+          name: transaction_id
+          description: target transaction
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  $ref: "#/components/schemas/TransactionStatus"
+      responses:
+        '200':
+          description: Updated Transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
 components:
   schemas:
     FileThumbnail:
@@ -99,14 +126,20 @@ components:
           type: string
         url:
           type: string
+    TransactionStatus:
+      type: string
+      enum: [READY, UPLOADED]
     Transaction:
       type: object
       required:
         - id
+        - status
         - url
       properties:
         id:
           type: string
+        status:
+          $ref: "#/components/schemas/TransactionStatus"
         url:
           type: string
     Error:
