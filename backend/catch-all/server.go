@@ -3,7 +3,9 @@ package main
 import (
 	"catch-all/gen/openapi"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -55,20 +57,53 @@ func (s Server) GetFileUrl(ctx *gin.Context, key string) {
 
 func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 	svc := s3.New(s.AWSSession)
-	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(s.BucketName),
-		Key:    aws.String(fmt.Sprintf("thumnails/%v/thum-0", key)),
-	})
-	url, err := req.Presign(15 * time.Minute)
+
+	urls, err := LoadThumbnailPaths(svc, s.BucketName, key)
 	if err != nil {
-		panic(err)
+		ctx.JSON(http.StatusNotFound, openapi.Error{Code: http.StatusNotFound, Message: "thumbnail is not created"})
+		return
+	}
+
+	items := make([]openapi.FileThumbnail, len(urls))
+	for i, url := range urls {
+		req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+			Bucket: aws.String(s.BucketName),
+			Key:    aws.String(url),
+		})
+		url, err := req.Presign(15 * time.Minute)
+		if err != nil {
+			panic(err)
+		}
+
+		items[i] = openapi.FileThumbnail{Url: url}
 	}
 
 	ctx.JSON(http.StatusOK, openapi.FileThumbnails{
-		Items: []openapi.FileThumbnail{
-			{
-				Url: url,
-			},
-		},
+		Items: items,
 	})
+}
+
+func LoadThumbnailPaths(svc *s3.S3, bucketName, key string) ([]string, error) {
+	obj, err := svc.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(fmt.Sprintf("thumnails/%v/_keys", key)),
+	})
+	if err != nil {
+		return []string{}, err
+	}
+
+	bodyBytes, err := ioutil.ReadAll(obj.Body)
+	if err != nil {
+		return []string{}, err
+	}
+
+	ret := []string{}
+	for _, str := range strings.Split(string(bodyBytes), "\n") {
+		buf := strings.TrimSpace(str)
+		if len(buf) > 0 {
+			ret = append(ret, buf)
+		}
+	}
+
+	return ret, nil
 }
