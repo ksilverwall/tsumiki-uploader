@@ -1,13 +1,15 @@
-type GroupId = string;
-type ItemId = string;
+import { ApplicationError } from "./repositories/ApplicationError";
 
-type GroupState = "EDITING" | "ARCHIVING" | "COMPLETE";
+export type GroupId = string;
+export type ItemId = string;
 
-type Item = {
+export type GroupState = "EDITING" | "ARCHIVING" | "COMPLETE" | "FAILED";
+
+export type Item = {
   file: File;
 };
 
-type Group = {
+export type Group = {
   label: string;
   items: { [key: ItemId]: Item };
 } & ({
@@ -15,8 +17,11 @@ type Group = {
 } | {
   state: "COMPLETE";
   key: string;
+} | {
+  state: "FAILED";
+  error: ApplicationError;
 });
 
-type Status = {
+export type Status = {
   groups: { [key: GroupId]: Group };
 };

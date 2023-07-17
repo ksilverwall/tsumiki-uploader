@@ -1,3 +1,6 @@
+import { GroupId, Item, ItemId } from "./models";
+import { ApplicationError } from "./repositories/ApplicationError";
+
 type LoadAction = {
   type: "SET_GROUP_ITEMS";
   groupId: GroupId;
@@ -29,9 +32,16 @@ type UploadCompleteAction = {
   key: string;
 };
 
-type Action =
+type UploadFailedAction = {
+  type: "UPLOAD_FAILED";
+  groupId: GroupId;
+  error: ApplicationError;
+};
+
+export type Action =
   | LoadAction
   | CreateGroupAction
   | UploadAction
   | UploadManyAction
-  | UploadCompleteAction;
+  | UploadCompleteAction
+  | UploadFailedAction;

@@ -6,6 +6,8 @@ import "./UploadPage.css";
 import GalleryView, { GalleryViewProps } from "./GalleryView";
 import { ArchiveFiles, GenerateId } from "../app/libs";
 import { Context } from "../app/context";
+import { ApplicationError } from "../app/repositories/ApplicationError";
+import { GroupId, Item, ItemId } from "../app/models";
 
 function Never<T>(_: never[]): T {
   throw new Error("assert never")
@@ -15,7 +17,7 @@ type Props = {
   context: Context;
 }
 
-function UploadPage({context}: Props) {
+function UploadPage({ context }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,6 +36,7 @@ function UploadPage({context}: Props) {
       },
     },
   });
+  const [asyncError, setAsyncError] = useState<unknown>();
 
   useEffect(() => {
     const dict = Object.fromEntries(
@@ -65,6 +68,27 @@ function UploadPage({context}: Props) {
     []
   );
 
+  const archiveAsync = useCallback(async (groupId: string, files: File[]) => {
+    try {
+      const key = await context.backend.upload(await ArchiveFiles(files));
+      dispatch({
+        type: "UPLOAD_COMPLETE",
+        groupId: groupId,
+        key,
+      });
+    } catch (err) {
+      if (err instanceof ApplicationError) {
+        dispatch({
+          type: "UPLOAD_FAILED",
+          groupId: groupId,
+          error: err,
+        });
+      } else {
+        setAsyncError(err);
+      }
+    }
+  }, [])
+
   const onArchiveAll = useCallback(() => {
     const targetGroupIds = Object.keys(status.groups).filter((groupId) => {
       const g = status.groups[groupId];
@@ -73,6 +97,10 @@ function UploadPage({context}: Props) {
 
     if (targetGroupIds.length === 0) {
       return
+    }
+
+    const removePid = (pid: string) => {
+      setPromisePool(promisePool.filter((v) => v.pid !== pid));
     }
 
     const promiseList = targetGroupIds.map((groupId) => {
@@ -85,19 +113,8 @@ function UploadPage({context}: Props) {
       return {
         pid,
         promise: (async () => {
-          try {
-            const key = await context.backend.upload(await ArchiveFiles(files));
-            dispatch({
-              type: "UPLOAD_COMPLETE",
-              groupId: groupId,
-              key,
-            });
-          } catch (err) {
-            // TODO: Store error
-            console.log(err);
-          }
-
-          setPromisePool(promisePool.filter((v) => v.pid !== pid));
+          await archiveAsync(groupId, files)
+          removePid(pid);
         })(),
       };
     });
@@ -154,6 +171,11 @@ function UploadPage({context}: Props) {
     items: group.items,
     state: "COMPLETE",
     url: new URL(window.location.origin + '/download?key=' + group.key),
+  } : group.state === "FAILED" ? {
+    label: group.label,
+    items: group.items,
+    state: "FAILED",
+    error: group.error,
   } : Never([group.state]);
 
   return (
@@ -167,6 +189,7 @@ function UploadPage({context}: Props) {
           <div>{archiveAllButton}</div>
         </aside>
         <section className="main-section">
+          {asyncError ? <p>{`${asyncError}`}</p> : null}
           {(viewGroupId && status.groups[viewGroupId]) ? <GalleryView {...props} /> : null}
         </section>
       </div>

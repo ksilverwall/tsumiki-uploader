@@ -1,3 +1,6 @@
+import { Action } from "./action";
+import { Group, GroupId, Item, ItemId, Status } from "./models";
+
 type Reducer<S, A> = (group: S, action: A) => S;
 
 function mapDict<S>(
@@ -29,6 +32,12 @@ const GroupReducer: Reducer<Group, Action> = (state, action) => {
         ...state,
         state: "COMPLETE",
         key: action.key,
+      };
+    case "UPLOAD_FAILED":
+      return {
+        ...state,
+        state: "FAILED",
+        error: action.error
       };
     default:
       return state;
@@ -93,6 +102,7 @@ const StatusReducer: Reducer<Status, Action> = (state, action) => {
       };
     case "SET_GROUP_ITEMS":
     case "UPLOAD_COMPLETE":
+    case "UPLOAD_FAILED":
       return {
         ...state,
         groups: mapDict(state.groups, (_, group) =>

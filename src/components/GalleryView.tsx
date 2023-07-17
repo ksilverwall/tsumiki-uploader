@@ -3,6 +3,8 @@ import GalleryViewLayout from "./GalleryViewLayout";
 import FileLoader from "./FileLoader";
 import ImagePreview from "./ImagePreview";
 import { GenerateId } from "../app/libs";
+import { ApplicationError } from "../app/repositories/ApplicationError";
+import { ItemId, Item } from "../app/models";
 
 export type GalleryViewProps = { label: string; items: { [key: ItemId]: Item } } & ({
   state: "EDITING";
@@ -13,6 +15,9 @@ export type GalleryViewProps = { label: string; items: { [key: ItemId]: Item } }
 } | {
   state: "COMPLETE";
   url: URL;
+} | {
+  state: "FAILED";
+  error: ApplicationError;
 })
 
 const GalleryView: React.FC<GalleryViewProps> = (props) => {
@@ -65,6 +70,11 @@ const GalleryView: React.FC<GalleryViewProps> = (props) => {
   ) : props.state === 'ARCHIVING' ? (
     <div>
       {title}
+    </div>
+  ) : props.state === 'FAILED' ? (
+    <div>
+      {title}
+      <p>{props.error.toString()}</p>
     </div>
   ) : (
     <div>
