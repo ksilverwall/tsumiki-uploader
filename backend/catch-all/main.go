@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,24 +10,37 @@ import (
 	"strings"
 
 	"catch-all/gen/openapi"
+	"catch-all/repositories"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/gin-gonic/gin"
 )
 
 var (
+	InitError   error
 	GinEngine   = gin.Default()
 	CORSHeaders = map[string]string{
 		"Access-Control-Allow-Origin":  "*",
 		"Access-Control-Allow-Headers": "Content-Type, Authorization",
-		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
 	}
 )
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	if InitError != nil {
+		return events.APIGatewayProxyResponse{
+			Headers:    CORSHeaders,
+			StatusCode: http.StatusInternalServerError,
+			Body:       fmt.Sprintf("Failed to init server: %v", InitError),
+		}, nil
+	}
+
 	if request.HTTPMethod == http.MethodOptions {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusOK,
@@ -46,19 +60,66 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}, nil
 }
 
-func main() {
+func initServer() (openapi.ServerInterface, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("STORAGE_REGION")),
 	})
 	if err != nil {
 		log.Println(fmt.Sprintf("failed to create session: %v", err))
-		return
+		return Server{}, nil
 	}
 
-	openapi.RegisterHandlers(GinEngine, Server{
+	svc := ssm.New(sess)
+	paramsInput := &ssm.GetParametersByPathInput{
+		Path:           aws.String("/app/tsumiki-uploader/backend"),
+		WithDecryption: aws.Bool(true),
+		Recursive:      aws.Bool(true),
+	}
+
+	params, err := svc.GetParametersByPath(paramsInput)
+	if err != nil {
+		return Server{}, fmt.Errorf("failed to load parameter: %w", err)
+	}
+
+	paramsMap := make(map[string]string)
+	for _, param := range params.Parameters {
+		paramsMap[*param.Name] = *param.Value
+	}
+
+	TableName := paramsMap["/app/tsumiki-uploader/backend/transaction-table/name"]
+	if len(TableName) == 0 {
+		return Server{}, errors.New("table name is not set")
+	}
+
+	QueueUrl := paramsMap["/app/tsumiki-uploader/backend/request-queue-url"]
+	if len(QueueUrl) == 0 {
+		return Server{}, errors.New("queue url is not set")
+	}
+
+	server := Server{
 		AWSSession: sess,
 		BucketName: os.Getenv("STORAGE_BUCKET_NAME"),
-	})
+		TransactionRepository: repositories.Transaction{
+			Dynamodb:  dynamodb.New(sess),
+			TableName: TableName,
+		},
+		QueueRepository: repositories.Queue{
+			SQS:      sqs.New(sess),
+			QueueUrl: QueueUrl,
+		},
+	}
+
+	return server, nil
+}
+
+func main() {
+	server, err := initServer()
+	if err != nil {
+		log.Println(fmt.Sprintf("failed to init server: %v", err))
+		InitError = err
+		return
+	}
+	openapi.RegisterHandlers(GinEngine, server)
 
 	lambda.Start(handler)
 }

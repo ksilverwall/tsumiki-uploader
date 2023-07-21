@@ -28,7 +28,7 @@ Resources:
     Properties:
       StageName: Prod
       Cors:
-        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowMethods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization'"
         AllowOrigin: "'*'"
 
@@ -52,6 +52,15 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                 Resource: !Sub "arn:aws:s3:::${Storage}/*"
+              - Effect: Allow
+                Action:
+                  - "dynamodb:PutItem"
+                  - "dynamodb:GetItem"
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*"
+              - Effect: Allow
+                Action:
+                  - "ssm:*"
+                Resource: !Sub "*"
 
   BackendFunction:
     Type: AWS::Serverless::Function

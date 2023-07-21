@@ -2,6 +2,8 @@ package main
 
 import (
 	"catch-all/gen/openapi"
+	"catch-all/models"
+	"catch-all/repositories"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,27 +18,10 @@ import (
 )
 
 type Server struct {
-	AWSSession *session.Session
-	BucketName string
-}
-
-func (s Server) CreateTransaction(ctx *gin.Context) {
-	u7, err := uuid.NewV7()
-	svc := s3.New(s.AWSSession)
-	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
-		Bucket: aws.String(s.BucketName),
-		Key:    aws.String(fmt.Sprintf("%v.zip", u7)),
-	})
-	url, err := req.Presign(15 * time.Minute)
-	if err != nil {
-		panic(err)
-	}
-
-	ctx.JSON(http.StatusOK, openapi.Transaction{
-		Id:  u7.String(),
-		Status: openapi.READY,
-		Url: url,
-	})
+	AWSSession            *session.Session
+	BucketName            string
+	TransactionRepository repositories.Transaction
+	QueueRepository       repositories.Queue
 }
 
 func (s Server) GetFileUrl(ctx *gin.Context, key string) {
@@ -84,8 +69,60 @@ func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 	})
 }
 
+func (s Server) CreateTransaction(ctx *gin.Context) {
+	var err error
+	u7, err := uuid.NewV7()
+	if err != nil {
+		panic(err)
+	}
+
+	id := u7.String()
+	filePath := fmt.Sprintf("%v.zip", id)
+
+	err = s.TransactionRepository.Put(id, models.Transaction{
+		ID:       id,
+		FilePath: filePath,
+	})
+	if err != nil {
+		errRes := NewErrorResponse(fmt.Errorf("failed to push transaction: %w", err))
+		ctx.JSON(errRes.Status, errRes.Body)
+		return
+	}
+
+	svc := s3.New(s.AWSSession)
+	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
+		Bucket: aws.String(s.BucketName),
+		Key:    aws.String(filePath),
+	})
+	url, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx.JSON(http.StatusOK, openapi.Transaction{
+		Id:     id,
+		Status: openapi.READY,
+		Url:    url,
+	})
+}
+
 func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
-	ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: "not implemented"})
+	t, err := s.TransactionRepository.Get(transactionId)
+	if err != nil {
+		e := fmt.Errorf("transaction id not found: %w", err)
+		ctx.JSON(http.StatusNotFound, openapi.Error{Code: http.StatusNotFound, Message: e.Error()})
+		return
+	}
+
+	s.QueueRepository.Push(models.ThumbnailRequest{
+		TransactionID: transactionId,
+		FilePath:      t.FilePath,
+	})
+
+	ctx.JSON(http.StatusOK, openapi.Transaction{
+		Id:     transactionId,
+		Status: openapi.UPLOADED,
+	})
 }
 
 func LoadThumbnailPaths(svc *s3.S3, bucketName, key string) ([]string, error) {

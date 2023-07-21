@@ -52,6 +52,51 @@ Resources:
         DefaultRootObject: index.html
         PriceClass: PriceClass_All
 
+  TransactionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions: 
+        - AttributeName: id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: id
+          KeyType: HASH
+      TimeToLiveSpecification: 
+        AttributeName: ExpirationTime
+        Enabled: true
+      BillingMode: PAY_PER_REQUEST
+
+  RequestQueue:
+    Type: AWS::SQS::Queue
+
+  TransactionTableNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/transaction-table/name
+      Type: String
+      Value: !Ref TransactionTable
+
+  TransactionTableKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/transaction-table/key
+      Type: String
+      Value: !Ref TransactionTable
+
+  TransactionTableTtlKeyParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/transaction-table/ttl-key
+      Type: String
+      Value: !Ref TransactionTable
+
+  RequestQueueUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/request-queue-url
+      Type: String
+      Value: !Ref RequestQueue
+
 Outputs:
   ApplicationStorage:
     Value: !Ref ApplicationStorage
