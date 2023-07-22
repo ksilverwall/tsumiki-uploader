@@ -8,21 +8,6 @@ Globals:
     MemorySize: 128
 
 Resources:
-  Storage:
-    Type: AWS::S3::Bucket
-    Properties:
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      CorsConfiguration:
-        CorsRules:
-          - AllowedOrigins: ["*"]
-            AllowedMethods: [GET, PUT]
-            AllowedHeaders: ["*"]
-            MaxAge: 3000
-
   BackendApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -64,7 +49,6 @@ Resources:
       Role: !GetAtt BackendFunctionRole.Arn
       Environment:
         Variables:
-          STORAGE_BUCKET_NAME: !Ref Storage
           STORAGE_REGION: !Ref AWS::Region
 
 Outputs:
