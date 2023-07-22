@@ -4,30 +4,31 @@ Description: >
   sam-tsumiki-uploader-batches
   Sample SAM Template for sam-tsumiki-uploader-batches
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 5
+    Timeout: 30
     MemorySize: 128
 
 Resources:
   CreateThumbnailsFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
-      CodeUri: createThumbnails/
-      Handler: hello-world
+      CodeUri: create-thumbnails/
+      Handler: create-thumbnails
       Runtime: go1.x
       Architectures:
         - x86_64
       Events:
         CatchAll:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /hello
             Method: GET
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+      Environment:
         Variables:
-          PARAM1: VALUE
+          REGION: !Ref AWS::Region
+      Policies:
+        - "{{resolve:ssm:/app/tsumiki-uploader/backend/platform/policy}}"
 
   ThumbnailsCreatingExecutionRole:
     Type: AWS::IAM::Role
@@ -57,7 +58,7 @@ Resources:
               "Parameters": {
                 "FunctionName": "${CreateThumbnailsFunction}",
                 "Payload": {
-                    "Input.$": "$"
+                  "Input.$": "$"
                 }
               },
               "End": true
