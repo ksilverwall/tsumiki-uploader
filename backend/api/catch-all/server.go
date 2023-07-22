@@ -5,34 +5,26 @@ import (
 	"catch-all/models"
 	"catch-all/repositories"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 )
 
 type Server struct {
-	AWSSession             *session.Session
-	BucketName             string
+	StorageRepository      repositories.Storage
 	TransactionRepository  repositories.Transaction
 	StateMachineRepository repositories.StateMachine
 }
 
 func (s Server) GetFileUrl(ctx *gin.Context, key string) {
-	svc := s3.New(s.AWSSession)
-	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(s.BucketName),
-		Key:    aws.String(fmt.Sprintf("%v.zip", key)),
-	})
-	url, err := req.Presign(15 * time.Minute)
+	url, err := s.StorageRepository.GetSignedUrl(repositories.SignedUrlModeGET, fmt.Sprintf("%v.zip", key))
 	if err != nil {
-		panic(err)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: "failed to get signed url"})
+			return
+		}
 	}
 
 	ctx.JSON(http.StatusOK, openapi.DownloadInfo{
@@ -42,26 +34,35 @@ func (s Server) GetFileUrl(ctx *gin.Context, key string) {
 }
 
 func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
-	svc := s3.New(s.AWSSession)
-
-	urls, err := LoadThumbnailPaths(svc, s.BucketName, key)
+	data, err := s.StorageRepository.Get(fmt.Sprintf("thumbnails/%v/_keys", key))
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, openapi.Error{Code: http.StatusNotFound, Message: "thumbnail is not created"})
 		return
 	}
 
-	items := make([]openapi.FileThumbnail, len(urls))
-	for i, url := range urls {
-		req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-			Bucket: aws.String(s.BucketName),
-			Key:    aws.String(url),
-		})
-		url, err := req.Presign(15 * time.Minute)
+	if len(data) == 0 {
+		ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: "thumbnail key data is empty"})
+		return
+	}
+	keys := SplitLines(string(data))
+	if len(keys) == 0 {
+		ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: "thumbnail key file is empty"})
+		return
+	}
+
+	items := []openapi.FileThumbnail{}
+	for _, key := range keys {
+		url, err := s.StorageRepository.GetSignedUrl(repositories.SignedUrlModeGET, key)
 		if err != nil {
 			panic(err)
 		}
 
-		items[i] = openapi.FileThumbnail{Url: url}
+		items = append(items, openapi.FileThumbnail{Url: url})
+	}
+
+	if len(items) == 0 {
+		ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: "items is empty"})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, openapi.FileThumbnails{
@@ -70,7 +71,6 @@ func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 }
 
 func (s Server) CreateTransaction(ctx *gin.Context) {
-	var err error
 	u7, err := uuid.NewV7()
 	if err != nil {
 		panic(err)
@@ -89,12 +89,7 @@ func (s Server) CreateTransaction(ctx *gin.Context) {
 		return
 	}
 
-	svc := s3.New(s.AWSSession)
-	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
-		Bucket: aws.String(s.BucketName),
-		Key:    aws.String(filePath),
-	})
-	url, err := req.Presign(15 * time.Minute)
+	url, err := s.StorageRepository.GetSignedUrl(repositories.SignedUrlModePUT, filePath)
 	if err != nil {
 		panic(err)
 	}
@@ -132,27 +127,14 @@ func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
 	})
 }
 
-func LoadThumbnailPaths(svc *s3.S3, bucketName, key string) ([]string, error) {
-	obj, err := svc.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(fmt.Sprintf("thumbnails/%v/_keys", key)),
-	})
-	if err != nil {
-		return []string{}, err
-	}
-
-	bodyBytes, err := ioutil.ReadAll(obj.Body)
-	if err != nil {
-		return []string{}, err
-	}
-
+func SplitLines(data string) []string {
 	ret := []string{}
-	for _, str := range strings.Split(string(bodyBytes), "\n") {
+	for _, str := range strings.Split(data, "\n") {
 		buf := strings.TrimSpace(str)
 		if len(buf) > 0 {
 			ret = append(ret, buf)
 		}
 	}
 
-	return ret, nil
+	return ret
 }

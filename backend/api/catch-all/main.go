@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sfn"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/gin-gonic/gin"
@@ -85,8 +86,10 @@ func NewServer(region string) (openapi.ServerInterface, error) {
 	}
 
 	server := Server{
-		AWSSession: sess,
-		BucketName: pp.DataStorage,
+		StorageRepository: repositories.Storage{
+			Client:     s3.New(sess),
+			BucketName: pp.DataStorage,
+		},
 		TransactionRepository: repositories.Transaction{
 			Dynamodb:  dynamodb.New(sess),
 			TableName: pp.TransactionTable.Name,
