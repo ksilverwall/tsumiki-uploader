@@ -47,22 +47,14 @@ func (r StorageRepository) Upload(key string, filePath string) error {
 	return err
 }
 
-func (r StorageRepository) UploadThumbnails(dirpath string, key string, filePaths []string) error {
+func (r StorageRepository) UploadThumbnails(key string, filePaths []string) error {
 	prefix := fmt.Sprintf("thumbnails/%s", key)
-
-	files, err := ioutil.ReadDir(dirpath)
-	if err != nil {
-		return err
-	}
-	if len(files) == 0 {
-		return fmt.Errorf("file not found")
-	}
 
 	s3paths := []string{}
 	for _, file := range filePaths {
 		s3path := filepath.Join(prefix, filepath.Base(file))
 
-		err = r.Upload(s3path, file)
+		err := r.Upload(s3path, file)
 		if err != nil {
 			return err
 		}
