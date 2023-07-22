@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -33,7 +32,22 @@ func (r StorageRepository) GetZip(key string) ([]byte, error) {
 	return buff.Bytes(), nil
 }
 
-func (r StorageRepository) UploadThumbnails(dirpath string, key string) error {
+func (r StorageRepository) Upload(key string, filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = r.Uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(r.BucketName),
+		Key:    aws.String(key),
+		Body:   file,
+	})
+	return err
+}
+
+func (r StorageRepository) UploadThumbnails(dirpath string, key string, filePaths []string) error {
 	prefix := fmt.Sprintf("thumbnails/%s", key)
 
 	files, err := ioutil.ReadDir(dirpath)
@@ -44,46 +58,33 @@ func (r StorageRepository) UploadThumbnails(dirpath string, key string) error {
 		return fmt.Errorf("file not found")
 	}
 
-	keyFile, err := ioutil.TempFile("", "*")
+	s3paths := []string{}
+	for _, file := range filePaths {
+		s3path := filepath.Join(prefix, filepath.Base(file))
+
+		err = r.Upload(s3path, file)
+		if err != nil {
+			return err
+		}
+
+		s3paths = append(s3paths, s3path)
+	}
+
+	keysFile, err := ioutil.TempFile("", "*")
 	if err != nil {
 		return fmt.Errorf("Failed to create key file: %w", err)
 	}
-	defer keyFile.Close()
 
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-
-		filePath := filepath.Join(dirpath, file.Name())
-		file, err := os.Open(filePath)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		s3path := filepath.Join(prefix, strings.TrimPrefix(filePath, dirpath))
-
-		_, err = r.Uploader.Upload(&s3manager.UploadInput{
-			Bucket: aws.String(r.BucketName),
-			Key:    aws.String(s3path),
-			Body:   file,
-		})
-		if err != nil {
-			return err
-		}
-
-		_, err = keyFile.WriteString(s3path)
+	for _, s3p := range s3paths {
+		_, err = keysFile.WriteString(s3p)
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = r.Uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(r.BucketName),
-		Key:    aws.String(filepath.Join(prefix, "_keys")),
-		Body:   keyFile,
-	})
+	keysFile.Close()
+
+	err = r.Upload(filepath.Join(prefix, "_keys"), keysFile.Name())
 	if err != nil {
 		return err
 	}

@@ -71,7 +71,7 @@ func mainProcess(request ThumbnailRequest) error {
 		return fmt.Errorf("no thumbnail files created")
 	}
 
-	err = r.UploadThumbnails(tempDir, request.TransactionID)
+	err = r.UploadThumbnails(tempDir, request.TransactionID, result.FilePaths)
 	if err != nil {
 		return fmt.Errorf("failed to upload thumbnails: %w", err)
 	}
