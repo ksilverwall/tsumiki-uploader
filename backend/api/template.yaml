@@ -43,6 +43,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
+        # TODO: Replace to ManagedPolicy
         - PolicyName: MyFunctionPolicy
           PolicyDocument:
             Version: "2012-10-17"
@@ -61,6 +62,10 @@ Resources:
                 Action:
                   - "ssm:*"
                 Resource: !Sub "*"
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:ThumbnailsCreatingStateMachine"
 
   BackendFunction:
     Type: AWS::Serverless::Function

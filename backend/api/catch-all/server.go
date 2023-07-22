@@ -18,10 +18,10 @@ import (
 )
 
 type Server struct {
-	AWSSession            *session.Session
-	BucketName            string
-	TransactionRepository repositories.Transaction
-	QueueRepository       repositories.Queue
+	AWSSession             *session.Session
+	BucketName             string
+	TransactionRepository  repositories.Transaction
+	StateMachineRepository repositories.StateMachine
 }
 
 func (s Server) GetFileUrl(ctx *gin.Context, key string) {
@@ -114,10 +114,17 @@ func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
 		return
 	}
 
-	s.QueueRepository.Push(models.ThumbnailRequest{
+	err = s.StateMachineRepository.Execute(models.ThumbnailRequest{
 		TransactionID: transactionId,
 		FilePath:      t.FilePath,
 	})
+	if err != nil {
+		e := fmt.Errorf("transaction id not found: %w", err)
+		ctx.JSON(http.StatusInternalServerError, openapi.Error{
+			Code:    http.StatusInternalServerError,
+			Message: e.Error(),
+		})
+	}
 
 	ctx.JSON(http.StatusOK, openapi.Transaction{
 		Id:     transactionId,

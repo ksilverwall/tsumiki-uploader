@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sfn"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/gin-gonic/gin"
 )
@@ -86,14 +86,14 @@ func initServer() (openapi.ServerInterface, error) {
 		paramsMap[*param.Name] = *param.Value
 	}
 
+	stateMachineArn := paramsMap["/app/tsumiki-uploader/backend/batches/thumbnails-creating-state-machine"]
+	if len(stateMachineArn) == 0 {
+		return Server{}, errors.New("stateMachineArn is not set")
+	}
+
 	TableName := paramsMap["/app/tsumiki-uploader/backend/transaction-table/name"]
 	if len(TableName) == 0 {
 		return Server{}, errors.New("table name is not set")
-	}
-
-	QueueUrl := paramsMap["/app/tsumiki-uploader/backend/request-queue-url"]
-	if len(QueueUrl) == 0 {
-		return Server{}, errors.New("queue url is not set")
 	}
 
 	server := Server{
@@ -103,9 +103,9 @@ func initServer() (openapi.ServerInterface, error) {
 			Dynamodb:  dynamodb.New(sess),
 			TableName: TableName,
 		},
-		QueueRepository: repositories.Queue{
-			SQS:      sqs.New(sess),
-			QueueUrl: QueueUrl,
+		StateMachineRepository: repositories.StateMachine{
+			Client:          sfn.New(sess),
+			StateMachineArn: stateMachineArn,
 		},
 	}
 

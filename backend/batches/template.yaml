@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-tsumiki-uploader-batches
+  Sample SAM Template for sam-tsumiki-uploader-batches
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 128
+
+Resources:
+  CreateThumbnailsFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: createThumbnails/
+      Handler: hello-world
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Events:
+        CatchAll:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hello
+            Method: GET
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          PARAM1: VALUE
+
+  ThumbnailsCreatingExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub states.${AWS::Region}.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+
+  ThumbnailsCreatingStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: ThumbnailsCreatingStateMachine
+      DefinitionString: !Sub >
+        {
+          "StartAt": "MyState",
+          "States": {
+            "MyState": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${CreateThumbnailsFunction}",
+                "Payload": {
+                    "Input.$": "$"
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt ThumbnailsCreatingExecutionRole.Arn
+
+  ThumbnailsCreatingStateMachineArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/batches/thumbnails-creating-state-machine
+      Type: String
+      Value: !Ref ThumbnailsCreatingStateMachine
