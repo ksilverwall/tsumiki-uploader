@@ -135,7 +135,7 @@ func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
 func LoadThumbnailPaths(svc *s3.S3, bucketName, key string) ([]string, error) {
 	obj, err := svc.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
-		Key:    aws.String(fmt.Sprintf("thumnails/%v/_keys", key)),
+		Key:    aws.String(fmt.Sprintf("thumbnails/%v/_keys", key)),
 	})
 	if err != nil {
 		return []string{}, err
