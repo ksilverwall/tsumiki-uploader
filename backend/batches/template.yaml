@@ -66,9 +66,36 @@ Resources:
         }
       RoleArn: !GetAtt ThumbnailsCreatingExecutionRole.Arn
 
+  AccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: 'Managed policy for allowing specific S3 actions'
+      Path: '/'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - states:StartExecution
+            Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:ThumbnailsCreatingStateMachine"
+          - Effect: Allow
+            Action:
+              - "ssm:GetParameter"
+            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/app/tsumiki-uploader/backend/batches"
+
   ThumbnailsCreatingStateMachineArnParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /app/tsumiki-uploader/backend/batches/thumbnails-creating-state-machine
+      Name: /app/tsumiki-uploader/backend/batches
       Type: String
-      Value: !Ref ThumbnailsCreatingStateMachine
+      Value: !Sub |
+        {
+          "ThumbnailsCreatingStateMachineArn": "${ThumbnailsCreatingStateMachine}"
+        }
+
+  PolicyParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/batches/policy
+      Type: String
+      Value: !Ref AccessPolicy

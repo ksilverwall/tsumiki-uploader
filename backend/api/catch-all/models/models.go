@@ -9,3 +9,18 @@ type ThumbnailRequest struct {
 	TransactionID string
 	FilePath      string
 }
+
+type DynamodbInfo struct {
+	Name string
+	Key  string
+	TTL  string
+}
+
+type PlatformParameters struct {
+	DataStorage      string
+	TransactionTable DynamodbInfo
+}
+
+type BatchParameters struct {
+	ThumbnailsCreatingStateMachineArn string
+}

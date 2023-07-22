@@ -66,36 +66,49 @@ Resources:
         Enabled: true
       BillingMode: PAY_PER_REQUEST
 
-  RequestQueue:
-    Type: AWS::SQS::Queue
-
-  TransactionTableNameParameter:
+  AccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Path: '/'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${DataStorage}/*"
+          - Effect: Allow
+            Action:
+              - "dynamodb:PutItem"
+              - "dynamodb:GetItem"
+            Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*"
+          - Effect: Allow
+            Action:
+              - "ssm:GetParameter"
+            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/app/tsumiki-uploader/backend/platform"
+ 
+  BackendPlatformParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /app/tsumiki-uploader/backend/transaction-table/name
+      Name: /app/tsumiki-uploader/backend/platform
       Type: String
-      Value: !Ref TransactionTable
+      Value: !Sub >
+        {
+          "DataStorage": "${DataStorage}",
+          "TransactionTable": {
+            "Name": "${TransactionTable}",
+            "Key": "id",
+            "TTL": "ExpirationTime"
+          }
+        }
 
-  TransactionTableKeyParameter:
+  PolicyParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: /app/tsumiki-uploader/backend/transaction-table/key
+      Name: /app/tsumiki-uploader/backend/platform/policy
       Type: String
-      Value: !Ref TransactionTable
-
-  TransactionTableTtlKeyParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /app/tsumiki-uploader/backend/transaction-table/ttl-key
-      Type: String
-      Value: !Ref TransactionTable
-
-  RequestQueueUrlParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /app/tsumiki-uploader/backend/request-queue-url
-      Type: String
-      Value: !Ref RequestQueue
+      Value: !Ref AccessPolicy
 
 Outputs:
   ApplicationStorage:

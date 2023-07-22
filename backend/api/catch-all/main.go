@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"strings"
 
 	"catch-all/gen/openapi"
+	"catch-all/models"
 	"catch-all/repositories"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -33,14 +33,6 @@ var (
 )
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	if InitError != nil {
-		return events.APIGatewayProxyResponse{
-			Headers:    CORSHeaders,
-			StatusCode: http.StatusInternalServerError,
-			Body:       fmt.Sprintf("Failed to init server: %v", InitError),
-		}, nil
-	}
-
 	if request.HTTPMethod == http.MethodOptions {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusOK,
@@ -60,52 +52,48 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}, nil
 }
 
-func initServer() (openapi.ServerInterface, error) {
+func uninitHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		Headers:    CORSHeaders,
+		StatusCode: http.StatusInternalServerError,
+		Body:       fmt.Sprintf("Failed to init server: %v", InitError),
+	}, nil
+}
+
+func NewServer(region string) (openapi.ServerInterface, error) {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(os.Getenv("STORAGE_REGION")),
+		Region: aws.String(region),
 	})
 	if err != nil {
 		log.Println(fmt.Sprintf("failed to create session: %v", err))
 		return Server{}, nil
 	}
 
-	svc := ssm.New(sess)
-	paramsInput := &ssm.GetParametersByPathInput{
-		Path:           aws.String("/app/tsumiki-uploader/backend"),
-		WithDecryption: aws.Bool(true),
-		Recursive:      aws.Bool(true),
-	}
+	var pp models.PlatformParameters
+	var pb models.BatchParameters
 
-	params, err := svc.GetParametersByPath(paramsInput)
+	parameterRepository := repositories.ParameterRepository{Client: ssm.New(sess)}
+
+	err = parameterRepository.Get("/app/tsumiki-uploader/backend/platform", &pp)
 	if err != nil {
-		return Server{}, fmt.Errorf("failed to load parameter: %w", err)
+		return Server{}, fmt.Errorf("failed to load platform parameters: %w", err)
 	}
 
-	paramsMap := make(map[string]string)
-	for _, param := range params.Parameters {
-		paramsMap[*param.Name] = *param.Value
-	}
-
-	stateMachineArn := paramsMap["/app/tsumiki-uploader/backend/batches/thumbnails-creating-state-machine"]
-	if len(stateMachineArn) == 0 {
-		return Server{}, errors.New("stateMachineArn is not set")
-	}
-
-	TableName := paramsMap["/app/tsumiki-uploader/backend/transaction-table/name"]
-	if len(TableName) == 0 {
-		return Server{}, errors.New("table name is not set")
+	err = parameterRepository.Get("/app/tsumiki-uploader/backend/batches", &pb)
+	if err != nil {
+		return Server{}, fmt.Errorf("failed to load batch parameters: %w", err)
 	}
 
 	server := Server{
 		AWSSession: sess,
-		BucketName: os.Getenv("STORAGE_BUCKET_NAME"),
+		BucketName: pp.DataStorage,
 		TransactionRepository: repositories.Transaction{
 			Dynamodb:  dynamodb.New(sess),
-			TableName: TableName,
+			TableName: pp.TransactionTable.Name,
 		},
 		StateMachineRepository: repositories.StateMachine{
 			Client:          sfn.New(sess),
-			StateMachineArn: stateMachineArn,
+			StateMachineArn: pb.ThumbnailsCreatingStateMachineArn,
 		},
 	}
 
@@ -113,12 +101,13 @@ func initServer() (openapi.ServerInterface, error) {
 }
 
 func main() {
-	server, err := initServer()
+	server, err := NewServer(os.Getenv("STORAGE_REGION"))
 	if err != nil {
 		log.Println(fmt.Sprintf("failed to init server: %v", err))
 		InitError = err
 		return
 	}
+
 	openapi.RegisterHandlers(GinEngine, server)
 
 	lambda.Start(handler)

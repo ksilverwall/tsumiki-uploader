@@ -42,30 +42,9 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
-      Policies:
-        # TODO: Replace to ManagedPolicy
-        - PolicyName: MyFunctionPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                Resource: !Sub "arn:aws:s3:::${Storage}/*"
-              - Effect: Allow
-                Action:
-                  - "dynamodb:PutItem"
-                  - "dynamodb:GetItem"
-                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*"
-              - Effect: Allow
-                Action:
-                  - "ssm:*"
-                Resource: !Sub "*"
-              - Effect: Allow
-                Action:
-                  - states:StartExecution
-                Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:ThumbnailsCreatingStateMachine"
+      ManagedPolicyArns:
+        - "{{resolve:ssm:/app/tsumiki-uploader/backend/batches/policy}}"
+        - "{{resolve:ssm:/app/tsumiki-uploader/backend/platform/policy}}"
 
   BackendFunction:
     Type: AWS::Serverless::Function
