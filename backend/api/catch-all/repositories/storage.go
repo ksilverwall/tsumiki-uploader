@@ -47,8 +47,7 @@ func (r Storage) GetSignedUrl(mode SignedUrlMode, key string) (string, error) {
 			Bucket: aws.String(r.BucketName),
 			Key:    aws.String(key),
 		})
-	}
-	if mode == SignedUrlModePUT {
+	} else if mode == SignedUrlModePUT {
 		req, _ = r.Client.PutObjectRequest(&s3.PutObjectInput{
 			Bucket: aws.String(r.BucketName),
 			Key:    aws.String(key),

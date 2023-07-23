@@ -54,7 +54,8 @@ func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 	for _, key := range keys {
 		url, err := s.StorageRepository.GetSignedUrl(repositories.SignedUrlModeGET, key)
 		if err != nil {
-			panic(err)
+			ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: fmt.Errorf("failed to create signed url: %w", err).Error()})
+			return
 		}
 
 		items = append(items, openapi.FileThumbnail{Url: url})
@@ -73,7 +74,8 @@ func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 func (s Server) CreateTransaction(ctx *gin.Context) {
 	u7, err := uuid.NewV7()
 	if err != nil {
-		panic(err)
+		ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: "failed to create transaction id"})
+		return
 	}
 
 	id := u7.String()
@@ -91,7 +93,8 @@ func (s Server) CreateTransaction(ctx *gin.Context) {
 
 	url, err := s.StorageRepository.GetSignedUrl(repositories.SignedUrlModePUT, filePath)
 	if err != nil {
-		panic(err)
+		ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: "failed to get signed url"})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, openapi.Transaction{
