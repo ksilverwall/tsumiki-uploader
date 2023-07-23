@@ -9,23 +9,22 @@ import (
 	"strings"
 
 	"catch-all/gen/openapi"
-	"catch-all/models"
-	"catch-all/repositories"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/sfn"
-	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/gin-gonic/gin"
 )
 
+type GlobalParams struct {
+	GinEngine *gin.Engine
+}
+
 var (
-	InitError   error
-	GinEngine   = gin.Default()
+	Global = GlobalParams{
+		GinEngine: gin.Default(),
+	}
 	CORSHeaders = map[string]string{
 		"Access-Control-Allow-Origin":  "*",
 		"Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -44,7 +43,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	req, _ := http.NewRequest(request.HTTPMethod, request.Path, strings.NewReader(request.Body))
 	resp := httptest.NewRecorder()
 
-	GinEngine.ServeHTTP(resp, req)
+	Global.GinEngine.ServeHTTP(resp, req)
 
 	return events.APIGatewayProxyResponse{
 		Headers:    CORSHeaders,
@@ -53,65 +52,35 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}, nil
 }
 
-func uninitHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	return events.APIGatewayProxyResponse{
-		Headers:    CORSHeaders,
-		StatusCode: http.StatusInternalServerError,
-		Body:       fmt.Sprintf("Failed to init server: %v", InitError),
-	}, nil
-}
-
-func NewServer(region string) (openapi.ServerInterface, error) {
+func Init(g *GlobalParams) error {
+	region := os.Getenv("STORAGE_REGION")
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(region),
 	})
 	if err != nil {
-		log.Println(fmt.Sprintf("failed to create session: %v", err))
-		return Server{}, nil
+		return fmt.Errorf("failed to create session: %v", err)
 	}
 
-	var pp models.PlatformParameters
-	var pb models.BatchParameters
-
-	parameterRepository := repositories.ParameterRepository{Client: ssm.New(sess)}
-
-	err = parameterRepository.Get("/app/tsumiki-uploader/backend/platform", &pp)
+	params, err := GetParameters(sess)
 	if err != nil {
-		return Server{}, fmt.Errorf("failed to load platform parameters: %w", err)
+		return fmt.Errorf("failed to get parameters: %v", err)
 	}
 
-	err = parameterRepository.Get("/app/tsumiki-uploader/backend/batches", &pb)
+	server := CreateServer(params)
 	if err != nil {
-		return Server{}, fmt.Errorf("failed to load batch parameters: %w", err)
+		return fmt.Errorf("failed to init server: %v", err)
 	}
 
-	server := Server{
-		StorageRepository: repositories.Storage{
-			Client:     s3.New(sess),
-			BucketName: pp.DataStorage,
-		},
-		TransactionRepository: repositories.Transaction{
-			Dynamodb:  dynamodb.New(sess),
-			TableName: pp.TransactionTable.Name,
-		},
-		StateMachineRepository: repositories.StateMachine{
-			Client:          sfn.New(sess),
-			StateMachineArn: pb.ThumbnailsCreatingStateMachineArn,
-		},
-	}
+	openapi.RegisterHandlers(g.GinEngine, server)
 
-	return server, nil
+	return nil
 }
 
 func main() {
-	server, err := NewServer(os.Getenv("STORAGE_REGION"))
+	err := Init(&Global)
 	if err != nil {
-		log.Println(fmt.Sprintf("failed to init server: %v", err))
-		InitError = err
+		log.Println(fmt.Sprintf("ERROR: %s", err.Error()))
 		return
 	}
-
-	openapi.RegisterHandlers(GinEngine, server)
-
 	lambda.Start(handler)
 }
