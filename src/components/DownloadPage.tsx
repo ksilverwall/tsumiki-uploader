@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Context } from "../app/context";
 import ImagePreview from "./ImagePreview";
-import { ApplicationError } from "../app/repositories/ApplicationError";
 
 const DownloadPage: React.FC<{ context: Context }> = ({ context }) => {
   const location = useLocation();
