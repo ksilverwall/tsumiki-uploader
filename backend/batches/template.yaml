@@ -100,3 +100,16 @@ Resources:
       Name: /app/tsumiki-uploader/backend/batches/policy
       Type: String
       Value: !Ref AccessPolicy
+
+  CreateThumbnailsFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${CreateThumbnailsFunction}'
+      RetentionInDays: 30
+
+  CreateThumbnailsFunctionLogParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/batches/logs/create-thumbnails
+      Type: String
+      Value: !Ref CreateThumbnailsFunctionLogGroup

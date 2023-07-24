@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: sam-tsumiki-uploader-monitor
+
+Resources:
+  BackendApiMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      FilterPattern: "ERROR"
+      LogGroupName: "{{resolve:ssm:/app/tsumiki-uploader/backend/api/log}}"
+      MetricTransformations:
+        - MetricName: ErrorCount
+          MetricNamespace: TsumikiUploader
+          MetricValue: "1"
+
+  BackendBatchesMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      FilterPattern: "ERROR"
+      LogGroupName: "{{resolve:ssm:/app/tsumiki-uploader/backend/batches/logs/create-thumbnails}}"
+      MetricTransformations:
+        - MetricName: ErrorCount
+          MetricNamespace: TsumikiUploader
+          MetricValue: "1"
+
+  SnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Application Error Notification
+      TopicName: AppErrorTopic
+
+  ErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: TsumikiUploaderErrorAlarm
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      MetricName: ErrorCount
+      Namespace: TsumikiUploader
+      Period: 60
+      Statistic: SampleCount
+      Threshold: 1
+      AlarmActions:
+        - !Ref SnsTopic

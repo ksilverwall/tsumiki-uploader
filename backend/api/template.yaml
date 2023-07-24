@@ -51,6 +51,19 @@ Resources:
         Variables:
           STORAGE_REGION: !Ref AWS::Region
 
+  BackendFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${BackendFunction}'
+      RetentionInDays: 30
+
+  LogParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/api/log
+      Type: String
+      Value: !Ref BackendFunctionLogGroup
+
 Outputs:
   BackendUrl:
     Description: "API Gateway endpoint URL"
