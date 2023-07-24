@@ -37,7 +37,7 @@ func mainProcess(request ThumbnailRequest) error {
 
 	parameterRepository := repositories.ParameterRepository{Client: ssm.New(sess)}
 
-	err = parameterRepository.Get("/app/tsumiki-uploader/backend/platform", &pp)
+	err = parameterRepository.Get("/app/tsumiki-uploader/platform/storages/backend", &pp)
 	if err != nil {
 		return fmt.Errorf("failed to load platform parameters: %w", err)
 	}

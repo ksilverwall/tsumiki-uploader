@@ -18,48 +18,6 @@ Parameters:
 
 Resources:
   #
-  # Storages
-  #
-
-  DataStorage:
-    Type: AWS::S3::Bucket
-    Properties:
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      CorsConfiguration:
-        CorsRules:
-          - AllowedOrigins: ["*"]
-            AllowedMethods: [GET, PUT]
-            AllowedHeaders: ["*"]
-            MaxAge: 3000
-
-  ApplicationStorage:
-    Type: AWS::S3::Bucket
-    Properties:
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-
-  TransactionTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions: 
-        - AttributeName: id
-          AttributeType: S
-      KeySchema: 
-        - AttributeName: id
-          KeyType: HASH
-      TimeToLiveSpecification: 
-        AttributeName: ExpirationTime
-        Enabled: true
-      BillingMode: PAY_PER_REQUEST
-
-  #
   # Certifications
   #
 
@@ -104,7 +62,7 @@ Resources:
           AcmCertificateArn: !Ref CertificateArn
           SslSupportMethod: sni-only
         Origins:
-          - DomainName: !GetAtt ApplicationStorage.DomainName
+          - DomainName: "{{resolve:ssm:/app/tsumiki-uploader/platform/storages/frontend/domain-name}}"
             Id: S3Origin
             S3OriginConfig:
               OriginAccessIdentity: ''
@@ -116,53 +74,9 @@ Resources:
         DefaultRootObject: index.html
         PriceClass: PriceClass_All
 
-  AccessPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      Path: '/'
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action:
-              - s3:GetObject
-              - s3:PutObject
-            Resource: !Sub "arn:aws:s3:::${DataStorage}/*"
-          - Effect: Allow
-            Action:
-              - "dynamodb:PutItem"
-              - "dynamodb:GetItem"
-            Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*"
-          - Effect: Allow
-            Action:
-              - "ssm:GetParameter"
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/app/tsumiki-uploader/backend/platform"
- 
   #
   # Parameters
   #
-
-  BackendPlatformParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /app/tsumiki-uploader/backend/platform
-      Type: String
-      Value: !Sub >
-        {
-          "DataStorage": "${DataStorage}",
-          "TransactionTable": {
-            "Name": "${TransactionTable}",
-            "Key": "id",
-            "TTL": "ExpirationTime"
-          }
-        }
-
-  PolicyParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /app/tsumiki-uploader/backend/platform/policy
-      Type: String
-      Value: !Ref AccessPolicy
 
   ApiDomainNameParameter:
     Type: AWS::SSM::Parameter
@@ -172,8 +86,6 @@ Resources:
       Value: !Ref CertDomainName
 
 Outputs:
-  ApplicationStorage:
-    Value: !Ref ApplicationStorage
   CloudFrontDomainName:
     Value: !GetAtt CloudFrontDistribution.DomainName
     Description: CloudFront Distribution Domain Name

@@ -34,7 +34,7 @@ Resources:
             RestApiId: !Ref RestApi
       Policies:
         - "{{resolve:ssm:/app/tsumiki-uploader/backend/batches/policy}}"
-        - "{{resolve:ssm:/app/tsumiki-uploader/backend/platform/policy}}"
+        - "{{resolve:ssm:/app/tsumiki-uploader/platform/storages/backend/policy}}"
       Environment:
         Variables:
           STORAGE_REGION: !Ref AWS::Region

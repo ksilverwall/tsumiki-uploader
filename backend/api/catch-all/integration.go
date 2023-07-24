@@ -28,7 +28,7 @@ func GetParameters(sess *session.Session) (ServerIntegrationParameters, error) {
 
 	parameterRepository := repositories.ParameterRepository{Client: ssm.New(sess)}
 
-	err = parameterRepository.Get("/app/tsumiki-uploader/backend/platform", &params.Platform)
+	err = parameterRepository.Get("/app/tsumiki-uploader/platform/storages/backend", &params.Platform)
 	if err != nil {
 		return params, fmt.Errorf("failed to load platform parameters: %w", err)
 	}

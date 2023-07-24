@@ -28,7 +28,7 @@ Resources:
         Variables:
           REGION: !Ref AWS::Region
       Policies:
-        - "{{resolve:ssm:/app/tsumiki-uploader/backend/platform/policy}}"
+        - "{{resolve:ssm:/app/tsumiki-uploader/platform/storages/backend/policy}}"
 
   ThumbnailsCreatingExecutionRole:
     Type: AWS::IAM::Role

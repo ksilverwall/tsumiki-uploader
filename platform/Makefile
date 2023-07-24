@@ -1,4 +1,7 @@
-.PHONY: cert servers integration
+.PHONY: global storages servers integration
+
+storages:
+	cd storages && sam deploy
 
 global:
 	(cd global && sam deploy --parameter-overrides DomainName=${DOMAIN_NAME} HostedZoneId=${HOST_ZONE_ID})
