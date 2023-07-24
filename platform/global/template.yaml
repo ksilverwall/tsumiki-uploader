@@ -19,7 +19,18 @@ Resources:
         - DomainName: !Ref DomainName
           HostedZoneId: !Ref HostedZoneId
 
+  ApiCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub "api.${DomainName}"
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+
 Outputs:
   ServiceCertificateArn:
     Value: !Ref ServiceCertificate
-    Description: ARN of the service certificate
+
+  ApiCertificateArn:
+    Value: !Ref ApiCertificate

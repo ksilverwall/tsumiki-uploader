@@ -8,7 +8,7 @@ Globals:
     MemorySize: 128
 
 Resources:
-  BackendApi:
+  RestApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
@@ -17,21 +17,7 @@ Resources:
         AllowHeaders: "'Content-Type,Authorization'"
         AllowOrigin: "'*'"
 
-  BackendFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - "{{resolve:ssm:/app/tsumiki-uploader/backend/batches/policy}}"
-        - "{{resolve:ssm:/app/tsumiki-uploader/backend/platform/policy}}"
-
-  BackendFunction:
+  HandleFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: catch-all/
@@ -45,16 +31,18 @@ Resources:
           Properties:
             Path: /{proxy+}
             Method: ANY
-            RestApiId: !Ref BackendApi
-      Role: !GetAtt BackendFunctionRole.Arn
+            RestApiId: !Ref RestApi
+      Policies:
+        - "{{resolve:ssm:/app/tsumiki-uploader/backend/batches/policy}}"
+        - "{{resolve:ssm:/app/tsumiki-uploader/backend/platform/policy}}"
       Environment:
         Variables:
           STORAGE_REGION: !Ref AWS::Region
 
-  BackendFunctionLogGroup:
+  HandleFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${BackendFunction}'
+      LogGroupName: !Sub '/aws/lambda/${HandleFunction}'
       RetentionInDays: 30
 
   LogParameter:
@@ -62,15 +50,16 @@ Resources:
     Properties:
       Name: /app/tsumiki-uploader/backend/api/log
       Type: String
-      Value: !Ref BackendFunctionLogGroup
+      Value: !Ref HandleFunctionLogGroup
+
+  ResourceApiParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/backend/api/resources/api
+      Type: String
+      Value: !Ref RestApi
 
 Outputs:
   BackendUrl:
     Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${BackendApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
-  BackendFunction:
-    Description: "First Lambda Function ARN"
-    Value: !GetAtt BackendFunction.Arn
-  BackendFunctionIamRole:
-    Description: "Implicit IAM Role created for function"
-    Value: !GetAtt BackendFunctionRole.Arn
+    Value: !Sub "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

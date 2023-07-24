@@ -5,7 +5,22 @@ Parameters:
   CertificateArn:
     Type: String
 
+  ApiCertificateArn:
+    Type: String
+  HostedZoneId:
+    Type: String
+  HostedZoneName:
+    Type: String
+  DomainName:
+    Type: String
+  ApiDomainName:
+    Type: String
+
 Resources:
+  #
+  # Storages
+  #
+
   DataStorage:
     Type: AWS::S3::Bucket
     Properties:
@@ -30,6 +45,55 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
+  TransactionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions: 
+        - AttributeName: id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: id
+          KeyType: HASH
+      TimeToLiveSpecification: 
+        AttributeName: ExpirationTime
+        Enabled: true
+      BillingMode: PAY_PER_REQUEST
+
+  #
+  # Certifications
+  #
+
+  ApiCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref ApiDomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+
+  CertDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !Ref ApiDomainName
+      RegionalCertificateArn: !Ref ApiCertificate
+      EndpointConfiguration:
+        Types: [REGIONAL]
+
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${HostedZoneName}"
+      Name: !Sub "${ApiDomainName}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CertDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt CertDomainName.RegionalHostedZoneId
+
+  #
+  # Servers
+  #
+
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -51,20 +115,6 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         DefaultRootObject: index.html
         PriceClass: PriceClass_All
-
-  TransactionTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      AttributeDefinitions: 
-        - AttributeName: id
-          AttributeType: S
-      KeySchema: 
-        - AttributeName: id
-          KeyType: HASH
-      TimeToLiveSpecification: 
-        AttributeName: ExpirationTime
-        Enabled: true
-      BillingMode: PAY_PER_REQUEST
 
   AccessPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -88,6 +138,10 @@ Resources:
               - "ssm:GetParameter"
             Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/app/tsumiki-uploader/backend/platform"
  
+  #
+  # Parameters
+  #
+
   BackendPlatformParameter:
     Type: AWS::SSM::Parameter
     Properties:
@@ -109,6 +163,13 @@ Resources:
       Name: /app/tsumiki-uploader/backend/platform/policy
       Type: String
       Value: !Ref AccessPolicy
+
+  ApiDomainNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/platform/api-domain-name
+      Type: String
+      Value: !Ref CertDomainName
 
 Outputs:
   ApplicationStorage:
