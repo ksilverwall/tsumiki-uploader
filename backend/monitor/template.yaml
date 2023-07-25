@@ -42,3 +42,20 @@ Resources:
       Threshold: 1
       AlarmActions:
         - !Ref SnsTopic
+
+  StepFunctionAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: TsumikiUploaderStepFunctionErrorAlarm
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      MetricName: Failed
+      Namespace: AWS/States
+      Period: 60
+      Statistic: SampleCount
+      Threshold: 1
+      Dimensions:
+        - Name: StateMachineArn
+          Value: "{{resolve:ssm:/app/tsumiki-uploader/backend/batches/creating-thumbnails-state-machine}}"
+      AlarmActions:
+        - !Ref SnsTopic

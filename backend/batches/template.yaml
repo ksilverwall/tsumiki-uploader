@@ -89,6 +89,13 @@ Resources:
   ThumbnailsCreatingStateMachineArnParameter:
     Type: AWS::SSM::Parameter
     Properties:
+      Name: /app/tsumiki-uploader/backend/batches/creating-thumbnails-state-machine
+      Type: String
+      Value: !Ref ThumbnailsCreatingStateMachine
+
+  AllStateMachineArnParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
       Name: /app/tsumiki-uploader/backend/batches
       Type: String
       Value: !Sub |
