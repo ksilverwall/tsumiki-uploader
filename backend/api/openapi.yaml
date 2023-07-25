@@ -24,12 +24,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DownloadInfo"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+        '400':
+          $ref: "#/components/responses/ClientError"
+        '500':
+          $ref: "#/components/responses/ServerError"
   /storage/files/{key}/thumbnails:
     get:
       operationId: getFileThumbnailUrls
@@ -47,12 +45,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FileThumbnails"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+        '400':
+          $ref: "#/components/responses/ClientError"
+        '500':
+          $ref: "#/components/responses/ServerError"
   /transactions/storing_file:
     post:
       operationId: createTransaction
@@ -63,12 +59,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Transaction"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+        '400':
+          $ref: "#/components/responses/ClientError"
+        '500':
+          $ref: "#/components/responses/ServerError"
   /transactions/storing_file/{transaction_id}:
     patch:
       operationId: updateTransaction
@@ -96,6 +90,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Transaction"
+        '400':
+          $ref: "#/components/responses/ClientError"
+        '500':
+          $ref: "#/components/responses/ServerError"
 components:
   schemas:
     FileThumbnail:
@@ -142,14 +140,42 @@ components:
           $ref: "#/components/schemas/TransactionStatus"
         url:
           type: string
-    Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string
+    ServerErrorCode:
+      type: string
+      enum:
+        - Unknown
+    ClientErrorCode:
+      type: string
+      enum:
+        - Unknown
+        - ThumbnailNotFound
+        - FileNotFound
+  responses:
+    ServerError:
+      description: Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - code
+              - message
+            properties:
+              code:
+                $ref: "#/components/schemas/ServerErrorCode"
+              message:
+                type: string
+    ClientError:
+      description: Client Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - code
+              - message
+            properties:
+              code:
+                $ref: "#/components/schemas/ClientErrorCode"
+              message:
+                type: string

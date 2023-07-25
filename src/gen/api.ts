@@ -26,6 +26,21 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from './base';
 /**
  * 
  * @export
+ * @enum {string}
+ */
+
+export const ClientErrorCode = {
+    Unknown: 'Unknown',
+    ThumbnailNotFound: 'ThumbnailNotFound',
+    FileNotFound: 'FileNotFound'
+} as const;
+
+export type ClientErrorCode = typeof ClientErrorCode[keyof typeof ClientErrorCode];
+
+
+/**
+ * 
+ * @export
  * @interface DownloadInfo
  */
 export interface DownloadInfo {
@@ -71,22 +86,58 @@ export interface FileThumbnails {
 /**
  * 
  * @export
- * @interface ModelError
+ * @interface GetFileUrl400Response
  */
-export interface ModelError {
+export interface GetFileUrl400Response {
     /**
      * 
-     * @type {number}
-     * @memberof ModelError
+     * @type {ClientErrorCode}
+     * @memberof GetFileUrl400Response
      */
-    'code': number;
+    'code': ClientErrorCode;
     /**
      * 
      * @type {string}
-     * @memberof ModelError
+     * @memberof GetFileUrl400Response
      */
     'message': string;
 }
+
+
+/**
+ * 
+ * @export
+ * @interface GetFileUrl500Response
+ */
+export interface GetFileUrl500Response {
+    /**
+     * 
+     * @type {ServerErrorCode}
+     * @memberof GetFileUrl500Response
+     */
+    'code': ServerErrorCode;
+    /**
+     * 
+     * @type {string}
+     * @memberof GetFileUrl500Response
+     */
+    'message': string;
+}
+
+
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const ServerErrorCode = {
+    Unknown: 'Unknown'
+} as const;
+
+export type ServerErrorCode = typeof ServerErrorCode[keyof typeof ServerErrorCode];
+
+
 /**
  * 
  * @export

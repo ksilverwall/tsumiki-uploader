@@ -10,28 +10,32 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ServerError struct {
+type ErrorResponse struct {
 	Status int
-	Body   openapi.Error
+	Body   any
 }
 
-func NewServerError(err error) ServerError {
+func (r ErrorResponse) Send(ctx *gin.Context) {
+	ctx.JSON(r.Status, r.Body)
+}
+
+func NewServerError(err error) ErrorResponse {
 	if errors.Is(err, services.ErrThumbnailNotCreated) {
-		return ServerError{
+		return ErrorResponse{
 			Status: http.StatusNotFound,
-			Body:   openapi.Error{Code: http.StatusNotFound, Message: err.Error()},
+			Body:   openapi.ClientError{Code: openapi.ClientErrorCodeThumbnailNotFound, Message: err.Error()},
 		}
 	}
 	if errors.Is(err, services.ErrUnexpected) {
-		return ServerError{
+		return ErrorResponse{
 			Status: http.StatusInternalServerError,
-			Body:   openapi.Error{Code: http.StatusInternalServerError, Message: err.Error()},
+			Body:   openapi.ClientError{Code: openapi.ClientErrorCodeUnknown, Message: err.Error()},
 		}
 	}
 
-	return ServerError{
+	return ErrorResponse{
 		Status: http.StatusInternalServerError,
-		Body:   openapi.Error{Code: http.StatusInternalServerError, Message: err.Error()},
+		Body:   openapi.ServerError{Code: openapi.ServerErrorCodeUnknown, Message: err.Error()},
 	}
 }
 
@@ -44,7 +48,7 @@ type Server struct {
 func (s Server) GetFileUrl(ctx *gin.Context, key string) {
 	url, err := s.StorageService.GetFileDownloadUrl(key)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, openapi.Error{Code: http.StatusInternalServerError, Message: err.Error()})
+		NewServerError(err).Send(ctx)
 		return
 	}
 
@@ -57,8 +61,7 @@ func (s Server) GetFileUrl(ctx *gin.Context, key string) {
 func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 	urls, err := s.StorageService.GetFileThumbnailUrls(key)
 	if err != nil {
-		se := NewServerError(err)
-		ctx.JSON(se.Status, se.Body)
+		NewServerError(err).Send(ctx)
 		return
 	}
 
@@ -75,22 +78,19 @@ func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
 func (s Server) CreateTransaction(ctx *gin.Context) {
 	id, err := services.GenerateID()
 	if err != nil {
-		se := NewServerError(err)
-		ctx.JSON(se.Status, se.Body)
+		NewServerError(err).Send(ctx)
 		return
 	}
 
 	url, filePath, err := s.StorageService.GetFileUploadUrl(id)
 	if err != nil {
-		se := NewServerError(err)
-		ctx.JSON(se.Status, se.Body)
+		NewServerError(err).Send(ctx)
 		return
 	}
 
 	err = s.TransactionService.Create(id, filePath)
 	if err != nil {
-		se := NewServerError(err)
-		ctx.JSON(se.Status, se.Body)
+		NewServerError(err).Send(ctx)
 		return
 	}
 
@@ -104,8 +104,7 @@ func (s Server) CreateTransaction(ctx *gin.Context) {
 func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
 	t, err := s.TransactionService.Get(transactionId)
 	if err != nil {
-		se := NewServerError(err)
-		ctx.JSON(se.Status, se.Body)
+		NewServerError(err).Send(ctx)
 		return
 	}
 
@@ -114,8 +113,8 @@ func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
 		FilePath:      t.FilePath,
 	})
 	if err != nil {
-		se := NewServerError(err)
-		ctx.JSON(se.Status, se.Body)
+		NewServerError(err).Send(ctx)
+		return
 	}
 
 	ctx.JSON(http.StatusOK, openapi.Transaction{
