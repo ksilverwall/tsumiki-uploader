@@ -35,6 +35,13 @@ Resources:
       Policies:
         - "{{resolve:ssm:/app/tsumiki-uploader/backend/batches/policy}}"
         - "{{resolve:ssm:/app/tsumiki-uploader/platform/storages/backend/policy}}"
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - "ssm:GetParameter"
+              Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/app/tsumiki-uploader/*"
+  
       Environment:
         Variables:
           STORAGE_REGION: !Ref AWS::Region

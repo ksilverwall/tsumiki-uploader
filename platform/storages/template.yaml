@@ -57,10 +57,6 @@ Resources:
               - "dynamodb:PutItem"
               - "dynamodb:GetItem"
             Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*"
-          - Effect: Allow
-            Action:
-              - "ssm:GetParameter"
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/app/tsumiki-uploader/platform/storages/backend/policy"
  
   BackendPlatformParameter:
     Type: AWS::SSM::Parameter

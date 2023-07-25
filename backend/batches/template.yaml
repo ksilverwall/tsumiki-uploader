@@ -79,10 +79,6 @@ Resources:
             Action:
               - states:StartExecution
             Resource: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:ThumbnailsCreatingStateMachine"
-          - Effect: Allow
-            Action:
-              - "ssm:GetParameter"
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/app/tsumiki-uploader/backend/batches"
 
   ThumbnailsCreatingStateMachineArnParameter:
     Type: AWS::SSM::Parameter
