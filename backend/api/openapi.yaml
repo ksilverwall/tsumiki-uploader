@@ -132,12 +132,15 @@ components:
       required:
         - id
         - status
+        - file_id
         - url
       properties:
         id:
           type: string
         status:
           $ref: "#/components/schemas/TransactionStatus"
+        file_id:
+          type: string
         url:
           type: string
     ServerErrorCode:
