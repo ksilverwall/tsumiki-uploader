@@ -3,14 +3,20 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"create-thumbnails/models"
+	"create-thumbnails/repositories"
 	"fmt"
 	"image"
 	"image/jpeg"
+	"net/http"
 	"os"
 	"path"
 	"strings"
-	"net/http"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/nfnt/resize"
 )
 
@@ -65,7 +71,7 @@ func ProcessZipFiles(content []byte, outDir string) (Result, error) {
 		outPath := path.Join(outDir, strings.Replace(fileName, ".", "_thumbnail.", 1))
 
 		fname, err := ProcessZipFile(f, outPath)
-		if err != nil{
+		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to process file[%d]: %w", i, err))
 			continue
 		}
@@ -87,6 +93,51 @@ func CreateThumbnail(img image.Image, outPath string) error {
 	err = jpeg.Encode(outFile, thumbnail, nil)
 	if err != nil {
 		return fmt.Errorf("failed to encode: %w", err)
+	}
+
+	return nil
+}
+
+func MainProcess(request models.ThumbnailRequest) error {
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(os.Getenv("REGION"))},
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to init session: %w", err)
+	}
+
+	var pp models.PlatformParameters
+
+	parameterRepository := repositories.ParameterRepository{Client: ssm.New(sess)}
+
+	err = parameterRepository.Get("/app/tsumiki-uploader/platform/storages/backend", &pp)
+	if err != nil {
+		return fmt.Errorf("failed to load platform parameters: %w", err)
+	}
+
+	s := Service{
+		StoraStorageRepository: repositories.Storage{
+			Downloader: s3manager.NewDownloader(sess),
+			Uploader:   s3manager.NewUploader(sess),
+			BucketName: pp.DataStorage,
+		},
+	}
+
+	tempDir, err := os.MkdirTemp("", "temp_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp dir: %w", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	paths, err := s.CreateThumbnails(request.ArchiveFilePath, tempDir)
+	if err != nil {
+		return fmt.Errorf("failed to create thumbnails: %w", err)
+	}
+
+	err = s.UploadThumbnails(request.ThumbnailFilesKeyPath, request.ThumbnailFilesPrefix, paths)
+	if err != nil {
+		return fmt.Errorf("failed to upload thumbnails: %w", err)
 	}
 
 	return nil

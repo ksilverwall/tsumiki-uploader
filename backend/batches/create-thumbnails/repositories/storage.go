@@ -2,22 +2,20 @@ package repositories
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-type StorageRepository struct {
+type Storage struct {
 	Downloader *s3manager.Downloader
 	Uploader   *s3manager.Uploader
 	BucketName string
 }
 
-func (r StorageRepository) GetZip(key string) ([]byte, error) {
+func (r Storage) GetZip(key string) ([]byte, error) {
 	buff := aws.WriteAtBuffer{}
 
 	_, err := r.Downloader.Download(&buff,
@@ -32,7 +30,7 @@ func (r StorageRepository) GetZip(key string) ([]byte, error) {
 	return buff.Bytes(), nil
 }
 
-func (r StorageRepository) Upload(key string, filePath string) error {
+func (r Storage) Upload(key string, filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return err
@@ -45,41 +43,4 @@ func (r StorageRepository) Upload(key string, filePath string) error {
 		Body:   file,
 	})
 	return err
-}
-
-func (r StorageRepository) UploadThumbnails(key string, filePaths []string) error {
-	prefix := fmt.Sprintf("thumbnails/%s", key)
-
-	s3paths := []string{}
-	for _, file := range filePaths {
-		s3path := filepath.Join(prefix, filepath.Base(file))
-
-		err := r.Upload(s3path, file)
-		if err != nil {
-			return err
-		}
-
-		s3paths = append(s3paths, s3path)
-	}
-
-	keysFile, err := ioutil.TempFile("", "*")
-	if err != nil {
-		return fmt.Errorf("Failed to create key file: %w", err)
-	}
-
-	for _, s3p := range s3paths {
-		_, err = keysFile.WriteString(s3p)
-		if err != nil {
-			return err
-		}
-	}
-
-	keysFile.Close()
-
-	err = r.Upload(filepath.Join(prefix, "_keys"), keysFile.Name())
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
