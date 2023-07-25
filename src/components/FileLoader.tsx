@@ -1,7 +1,8 @@
-type Prop = { onLoaded?: (files: File[]) => void }
+type Prop = { onLoaded?: (files: File[]) => void, className?: string }
 
 const FileLoader: React.FC<React.PropsWithChildren<Prop>> = ({
   onLoaded,
+  className,
   children,
 }) => {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -15,7 +16,7 @@ const FileLoader: React.FC<React.PropsWithChildren<Prop>> = ({
   };
 
   return (
-    <div onDrop={handleDrop} onDragOver={handleDragOver}>
+    <div className={className} onDrop={handleDrop} onDragOver={handleDragOver}>
       {children}
     </div>
   );

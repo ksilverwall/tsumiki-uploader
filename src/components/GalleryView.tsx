@@ -96,7 +96,7 @@ const GalleryView: React.FC<GalleryViewProps> = (props) => {
   ]
 
   return (
-    <FileLoader onLoaded={props.state === 'EDITING' ? onLoaded : undefined}>
+    <FileLoader className="gallery-view-wrap" onLoaded={props.state === 'EDITING' ? onLoaded : undefined}>
       <GalleryViewLayout slots={{ header, images }} />
     </FileLoader>
   )

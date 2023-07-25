@@ -27,6 +27,12 @@
   display: flex;
 }
 
+.gallery-view-wrap {
+  flex: 1;
+  display: flex;
+}
+
+/* 親要素に合わせたい！違う！親要素だ！ */
 .gallery-view {
   display: flex;
   flex-direction: column;
@@ -37,6 +43,7 @@
 .image-list {
   flex: 1;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
 }
