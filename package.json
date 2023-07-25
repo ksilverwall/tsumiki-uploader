@@ -8,7 +8,8 @@
     "prepare": "openapi-generator-cli generate -i ./backend/openapi.yaml -g typescript-axios -o src/gen",
     "build": "tsc && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:dev": "sh platform/deploy_params.sh ./dist dev"
   },
   "dependencies": {
     "aws-sdk": "^2.1398.0",
