@@ -29,6 +29,12 @@ Resources:
           REGION: !Ref AWS::Region
       Policies:
         - "{{resolve:ssm:/app/tsumiki-uploader/platform/storages/backend/policy}}"
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - "ssm:GetParameter"
+              Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/app/tsumiki-uploader/*"
 
   ThumbnailsCreatingExecutionRole:
     Type: AWS::IAM::Role
