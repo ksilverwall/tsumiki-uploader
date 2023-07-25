@@ -161,6 +161,12 @@ export interface Transaction {
      * @type {string}
      * @memberof Transaction
      */
+    'file_id': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Transaction
+     */
     'url': string;
 }
 

@@ -14,10 +14,11 @@ export default class Backend implements BackendInterface {
     try {
       const res1 = await this.accessor.backendApi.createTransaction();
       await this.accessor.s3Accessor.put(res1.data.url, zipData);
-      await this.accessor.backendApi.updateTransaction(res1.data.id, {status: TransactionStatus.Uploaded});
-      return res1.data.id;
+      const res2 = await this.accessor.backendApi.updateTransaction(res1.data.id, {status: TransactionStatus.Uploaded});
+
+      return res2.data.file_id;
     } catch (err) {
-      throw new ApplicationError(`failed to createTransaction`, err);
+      throw new ApplicationError(`failed to upload zip file`, err);
     }
   }
   async download(key: string): Promise<DownloadInfo> {
