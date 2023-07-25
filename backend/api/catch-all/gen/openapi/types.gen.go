@@ -45,6 +45,7 @@ type ServerErrorCode string
 
 // Transaction defines model for Transaction.
 type Transaction struct {
+	FileId string            `json:"file_id"`
 	Id     string            `json:"id"`
 	Status TransactionStatus `json:"status"`
 	Url    string            `json:"url"`

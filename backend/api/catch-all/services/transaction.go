@@ -12,24 +12,34 @@ type Transaction struct {
 	StateMachineRepository repositories.StateMachine
 }
 
-func (s *Transaction) Get(transactionID string) (models.Transaction, error) {
-	t, err := s.TransactionRepository.Get(transactionID)
+func (s *Transaction) Get(id models.TransactionID) (models.Transaction, error) {
+	t, err := s.TransactionRepository.Get(id)
 	if err != nil {
+		ErrorLog(fmt.Errorf("failed to get transaction id '%s': %w", id, err).Error())
 		return models.Transaction{}, ErrUnexpected
 	}
 
 	return t, nil
 }
 
-func (s *Transaction) Create(id string, filePath string) error {
-	err := s.TransactionRepository.Put(id, models.Transaction{
-		ID:       id,
+func (s *Transaction) Create(fid models.FileID, filePath string) (models.TransactionID, error) {
+	id, err := GenerateID()
+	tid := models.TransactionID(id)
+	if err != nil {
+		ErrorLog(fmt.Errorf("failed to create transaction id: %w", err).Error())
+		return models.TransactionID(""), ErrUnexpected
+	}
+
+	err = s.TransactionRepository.Put(tid, models.Transaction{
+		FileID:   fid,
 		FilePath: filePath,
 	})
 	if err != nil {
 		ErrorLog(fmt.Errorf("failed to push transaction: %w", err).Error())
-		return ErrUnexpected
+		return models.TransactionID(""), ErrUnexpected
 	}
 
-	return nil
+	InfoLog(fmt.Sprintf("transaction created with id '%s'", tid))
+
+	return tid, nil
 }

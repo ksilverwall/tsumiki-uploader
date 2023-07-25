@@ -1,17 +1,10 @@
 package services
 
 import (
+	"catch-all/models"
 	"catch-all/repositories"
-	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/gofrs/uuid"
-)
-
-var (
-	ErrUnexpected          = errors.New("unexpected server error")
-	ErrThumbnailNotCreated = errors.New("thumbnail has not been created")
 )
 
 func SplitLines(data string) []string {
@@ -26,24 +19,24 @@ func SplitLines(data string) []string {
 	return ret
 }
 
-func GenerateID() (string, error) {
-	u7, err := uuid.NewV7()
-	if err != nil {
-		ErrorLog(fmt.Errorf("failed to create transaction id: %w", err).Error())
-		return "", ErrUnexpected
-	}
+func GetArchivePath(s models.FileID) string {
+	return fmt.Sprintf("files/%v/archive.zip", s)
+}
 
-	id := u7.String()
+func GetThumbnailsPrefix(s models.FileID) string {
+	return fmt.Sprintf("files/%v/thumbnails/", s)
+}
 
-	return id, nil
+func GetThumbnailsKeyPath(s models.FileID) string {
+	return fmt.Sprintf("files/%v/thumbnails/_keys", s)
 }
 
 type Storage struct {
 	StorageRepository repositories.Storage
 }
 
-func (s *Storage) GetFileUploadUrl(id string) (string, string, error) {
-	filePath := fmt.Sprintf("%v.zip", id)
+func (s *Storage) GetFileUploadUrl(id models.FileID) (string, string, error) {
+	filePath := GetArchivePath(id)
 
 	url, err := s.StorageRepository.GetSignedUrl(repositories.SignedUrlModePUT, filePath)
 	if err != nil {
@@ -51,21 +44,25 @@ func (s *Storage) GetFileUploadUrl(id string) (string, string, error) {
 		return "", "", ErrUnexpected
 	}
 
+	InfoLog(fmt.Sprintf("get upload url for id '%s'", id))
+
 	return url, filePath, nil
 }
 
-func (s *Storage) GetFileDownloadUrl(id string) (string, error) {
-	url, err := s.StorageRepository.GetSignedUrl(repositories.SignedUrlModeGET, fmt.Sprintf("%v.zip", id))
+func (s *Storage) GetFileDownloadUrl(id models.FileID) (string, error) {
+	url, err := s.StorageRepository.GetSignedUrl(repositories.SignedUrlModeGET, GetArchivePath(id))
 	if err != nil {
 		ErrorLog(err.Error())
 		return "", ErrUnexpected
 	}
 
+	InfoLog(fmt.Sprintf("get download url for id '%s'", id))
+
 	return url, nil
 }
 
-func (s *Storage) GetFileThumbnailUrls(key string) ([]string, error) {
-	data, err := s.StorageRepository.Get(fmt.Sprintf("thumbnails/%v/_keys", key))
+func (s *Storage) GetFileThumbnailUrls(id models.FileID) ([]string, error) {
+	data, err := s.StorageRepository.Get(GetThumbnailsKeyPath(id))
 	if err != nil {
 		ErrorLog(err.Error())
 		return []string{}, ErrThumbnailNotCreated

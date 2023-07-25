@@ -1,13 +1,18 @@
 package models
 
+type FileID string
+type TransactionID string
+
 type Transaction struct {
-	ID       string
+	FileID   FileID
 	FilePath string
 }
 
 type ThumbnailRequest struct {
-	TransactionID string
-	FilePath      string
+	TransactionID         TransactionID
+	ArchiveFilePath       string
+	ThumbnailFilesKeyPath string
+	ThumbnailFilesPrefix  string
 }
 
 type DynamodbInfo struct {

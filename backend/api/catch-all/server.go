@@ -45,8 +45,8 @@ type Server struct {
 	AsyncService       services.Async
 }
 
-func (s Server) GetFileUrl(ctx *gin.Context, key string) {
-	url, err := s.StorageService.GetFileDownloadUrl(key)
+func (s Server) GetFileUrl(ctx *gin.Context, id string) {
+	url, err := s.StorageService.GetFileDownloadUrl(models.FileID(id))
 	if err != nil {
 		NewServerError(err).Send(ctx)
 		return
@@ -58,8 +58,8 @@ func (s Server) GetFileUrl(ctx *gin.Context, key string) {
 	})
 }
 
-func (s Server) GetFileThumbnailUrls(ctx *gin.Context, key string) {
-	urls, err := s.StorageService.GetFileThumbnailUrls(key)
+func (s Server) GetFileThumbnailUrls(ctx *gin.Context, id string) {
+	urls, err := s.StorageService.GetFileThumbnailUrls(models.FileID(id))
 	if err != nil {
 		NewServerError(err).Send(ctx)
 		return
@@ -82,35 +82,40 @@ func (s Server) CreateTransaction(ctx *gin.Context) {
 		return
 	}
 
-	url, filePath, err := s.StorageService.GetFileUploadUrl(id)
+	fid := models.FileID(id)
+
+	url, filePath, err := s.StorageService.GetFileUploadUrl(fid)
 	if err != nil {
 		NewServerError(err).Send(ctx)
 		return
 	}
 
-	err = s.TransactionService.Create(id, filePath)
+	tid, err := s.TransactionService.Create(fid, filePath)
 	if err != nil {
 		NewServerError(err).Send(ctx)
 		return
 	}
 
 	ctx.JSON(http.StatusOK, openapi.Transaction{
-		Id:     id,
+		Id:     string(tid),
 		Status: openapi.READY,
 		Url:    url,
 	})
 }
 
 func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
-	t, err := s.TransactionService.Get(transactionId)
+	tid := models.TransactionID(transactionId)
+	t, err := s.TransactionService.Get(tid)
 	if err != nil {
 		NewServerError(err).Send(ctx)
 		return
 	}
 
 	err = s.AsyncService.CreateThumbnails(models.ThumbnailRequest{
-		TransactionID: transactionId,
-		FilePath:      t.FilePath,
+		TransactionID:         tid,
+		ArchiveFilePath:       t.FilePath,
+		ThumbnailFilesKeyPath: services.GetThumbnailsKeyPath(t.FileID),
+		ThumbnailFilesPrefix:  services.GetThumbnailsPrefix(t.FileID),
 	})
 	if err != nil {
 		NewServerError(err).Send(ctx)
@@ -120,5 +125,6 @@ func (s Server) UpdateTransaction(ctx *gin.Context, transactionId string) {
 	ctx.JSON(http.StatusOK, openapi.Transaction{
 		Id:     transactionId,
 		Status: openapi.UPLOADED,
+		FileId: string(t.FileID),
 	})
 }

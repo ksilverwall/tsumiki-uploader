@@ -10,30 +10,29 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-type internalItem struct {
-	ID    string `json:"id"`
-	Value string `json:"name"`
-}
+type internalValue string
 
-func (i *internalItem) toModel() (models.Transaction, error) {
+func (v internalValue) toModel() (models.Transaction, error) {
 	var m models.Transaction
-	if err := json.Unmarshal([]byte(i.Value), &m); err != nil {
-		return models.Transaction{}, fmt.Errorf("transaction cannnot decode from to json: %w", err)
+	if err := json.Unmarshal([]byte(v), &m); err != nil {
+		return models.Transaction{}, fmt.Errorf("transaction cannnot decode from json value '%s': %w", v, err)
 	}
 
 	return m, nil
 }
 
-func newInternalItem(m models.Transaction) (internalItem, error) {
+func newInternalValue(m models.Transaction) (internalValue, error) {
 	b, err := json.Marshal(m)
 	if err != nil {
-		return internalItem{}, fmt.Errorf("transaction cannnot encode to json: %w", err)
+		return internalValue(""), fmt.Errorf("transaction cannnot encode to json: %w", err)
 	}
 
-	return internalItem{
-		ID:    m.ID,
-		Value: string(b),
-	}, nil
+	return internalValue(string(b)), nil
+}
+
+type putItem struct {
+	ID    models.TransactionID `json:"id"`
+	Value string               `json:"name"`
 }
 
 type Transaction struct {
@@ -41,14 +40,14 @@ type Transaction struct {
 	TableName string
 }
 
-func (c Transaction) Get(key string) (models.Transaction, error) {
+func (c Transaction) Get(id models.TransactionID) (models.Transaction, error) {
 	db := c.Dynamodb
 
 	params := &dynamodb.GetItemInput{
 		TableName: aws.String(c.TableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
-				S: aws.String(key),
+				S: aws.String(string(id)),
 			},
 		},
 	}
@@ -58,23 +57,31 @@ func (c Transaction) Get(key string) (models.Transaction, error) {
 		return models.Transaction{}, err
 	}
 
-	item := internalItem{}
+	item := putItem{}
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, &item)
 	if err != nil {
 		return models.Transaction{}, err
 	}
 
-	return item.toModel()
-}
-
-func (c Transaction) Put(key string, value models.Transaction) error {
-	item, err := newInternalItem(value)
+	m, err := internalValue(item.Value).toModel()
 	if err != nil {
-		return fmt.Errorf("failed to encode item: %w", err)
+		return models.Transaction{}, fmt.Errorf("failed to decode dynamodb value: %w", err)
 	}
 
-	av, err := dynamodbattribute.MarshalMap(item)
+	return m, nil
+}
+
+func (c Transaction) Put(id models.TransactionID, value models.Transaction) error {
+	v, err := newInternalValue(value)
+	if err != nil {
+		return fmt.Errorf("transaction cannnot encode to json: %w", err)
+	}
+
+	av, err := dynamodbattribute.MarshalMap(putItem{
+		ID:    id,
+		Value: string(v),
+	})
 	if err != nil {
 		return fmt.Errorf("failed to map to dynamodb object: %w", err)
 	}
