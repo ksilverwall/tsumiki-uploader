@@ -38,16 +38,6 @@ Resources:
       EndpointConfiguration:
         Types: [REGIONAL]
 
-  DnsRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneName: !Sub "${HostedZoneName}"
-      Name: !Sub "${ApiDomainName}."
-      Type: A
-      AliasTarget:
-        DNSName: !GetAtt CertDomainName.RegionalDomainName
-        HostedZoneId: !GetAtt CertDomainName.RegionalHostedZoneId
-
   #
   # Servers
   #
@@ -73,6 +63,30 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         DefaultRootObject: index.html
         PriceClass: PriceClass_All
+
+  #
+  # Resolve Name
+  #
+
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${HostedZoneName}"
+      Name: !Sub "${ApiDomainName}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CertDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt CertDomainName.RegionalHostedZoneId
+
+  WebDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub "${HostedZoneName}"
+      Name: !Sub "${DomainName}."
+      Type: A
+      AliasTarget:
+        HostedZoneId: Z2YN17T5R711GT  # XXX: for ap-northeast-1
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
 
   #
   # Parameters
