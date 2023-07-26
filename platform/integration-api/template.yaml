@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Tsunmiki Uploader Platform.IntegrationApi depends on Backend.Api and DomainSettings
+
+Parameters:
+  HostedZoneId:
+    Type: String
+  HostedZoneName:
+    Type: String
+  DomainName:
+    Type: String
+  ApiDomainName:
+    Type: String
+
+Resources:
+  ApiCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref ApiDomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref ApiDomainName
+          HostedZoneId: !Ref HostedZoneId
+
+  CertDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !Ref ApiDomainName
+      RegionalCertificateArn: !Ref ApiCertificate
+      EndpointConfiguration:
+        Types: [REGIONAL]
+
+  ApiDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Sub "${HostedZoneId}"
+      Name: !Sub "${ApiDomainName}."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CertDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt CertDomainName.RegionalHostedZoneId
+
+  #
+  # Parameters
+  #
+
+  ApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
+      ApiId: "{{resolve:ssm:/app/tsumiki-uploader/backend/api/resources/api}}"
+      DomainName: !Ref CertDomainName
+      Stage: Prod
