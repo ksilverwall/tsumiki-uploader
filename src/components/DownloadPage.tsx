@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Context } from "../app/context";
 import ImagePreview from "./ImagePreview";
+import { ApplicationError } from "../app/repositories/ApplicationError";
 
 const DownloadPage: React.FC<{ context: Context }> = ({ context }) => {
   const location = useLocation();
@@ -19,6 +20,11 @@ const DownloadPage: React.FC<{ context: Context }> = ({ context }) => {
       const info = await context.backend.download(key);
       const link = document.createElement('a');
       link.href = info.url;
+      const r = await fetch(info.url)
+      r.body?.cancel()
+      if (r.status !== 200) {
+        throw new ApplicationError("file not found")
+      }
       link.download = info.name;
       link.click();
     } catch (err) {

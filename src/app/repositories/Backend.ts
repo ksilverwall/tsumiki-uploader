@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { ClientErrorCode, DefaultApi, GetFileUrl400Response, GetFileUrl500Response, TransactionStatus } from "../../gen";
+import { ClientErrorCode, DefaultApi, GetFileUrl400Response, TransactionStatus } from "../../gen";
 import { BackendInterface, DownloadInfo } from "../interface";
 import { ApplicationError } from "./ApplicationError";
 import { S3SignedAccessor } from "./S3SignedAccessor";
