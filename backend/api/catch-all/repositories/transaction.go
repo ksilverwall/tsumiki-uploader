@@ -4,6 +4,7 @@ import (
 	"catch-all/models"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -30,9 +31,10 @@ func newInternalValue(m models.Transaction) (internalValue, error) {
 	return internalValue(string(b)), nil
 }
 
-type putItem struct {
-	ID    models.TransactionID `json:"id"`
-	Value string               `json:"name"`
+type DynamoDBItem struct {
+	ID             models.TransactionID `json:"id"`
+	Value          string               `json:"name"`
+	ExpirationTime int64                `json:"expiration_time"`
 }
 
 type Transaction struct {
@@ -57,7 +59,7 @@ func (c Transaction) Get(id models.TransactionID) (models.Transaction, error) {
 		return models.Transaction{}, err
 	}
 
-	item := putItem{}
+	item := DynamoDBItem{}
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, &item)
 	if err != nil {
@@ -72,15 +74,18 @@ func (c Transaction) Get(id models.TransactionID) (models.Transaction, error) {
 	return m, nil
 }
 
-func (c Transaction) Put(id models.TransactionID, value models.Transaction) error {
+func (c Transaction) Put(id models.TransactionID, value models.Transaction, currentTimeSec time.Time) error {
+	expiredAt := currentTimeSec.Add(10 * time.Minute)
+
 	v, err := newInternalValue(value)
 	if err != nil {
 		return fmt.Errorf("transaction cannnot encode to json: %w", err)
 	}
 
-	av, err := dynamodbattribute.MarshalMap(putItem{
-		ID:    id,
-		Value: string(v),
+	av, err := dynamodbattribute.MarshalMap(DynamoDBItem{
+		ID:             id,
+		Value:          string(v),
+		ExpirationTime: expiredAt.Unix(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to map to dynamodb object: %w", err)

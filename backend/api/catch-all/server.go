@@ -6,6 +6,7 @@ import (
 	"catch-all/services"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,20 @@ func (r ErrorResponse) Send(ctx *gin.Context) {
 }
 
 func NewServerError(err error) ErrorResponse {
+	if e, ok := err.(*services.Error); ok {
+		switch e.Code {
+		case services.ErrLabelThumbnailNotCreated:
+			return ErrorResponse{
+				Status: http.StatusNotFound,
+				Body:   openapi.ClientError{Code: openapi.ClientErrorCodeThumbnailNotFound, Message: "thumbnail has not been created"},
+			}
+		default:
+			return ErrorResponse{
+				Status: http.StatusInternalServerError,
+				Body:   openapi.ClientError{Code: openapi.ClientErrorCodeUnknown, Message: "unexpected server error"},
+			}
+		}
+	}
 	if errors.Is(err, services.ErrThumbnailNotCreated) {
 		return ErrorResponse{
 			Status: http.StatusNotFound,
@@ -76,6 +91,20 @@ func (s Server) GetFileThumbnailUrls(ctx *gin.Context, id string) {
 }
 
 func (s Server) CreateTransaction(ctx *gin.Context) {
+	v, exists := ctx.Get("RequestTimeSec")
+	if !exists {
+		services.ErrorLog("RequestTimeSec is not exists")
+		NewServerError(services.ErrUnexpected).Send(ctx)
+		return
+	}
+
+	currentTime, ok := v.(time.Time)
+	if !ok {
+		services.ErrorLog("RequestTimeSec is not time obj")
+		NewServerError(services.ErrUnexpected).Send(ctx)
+		return
+	}
+
 	id, err := services.GenerateID()
 	if err != nil {
 		NewServerError(err).Send(ctx)
@@ -90,7 +119,7 @@ func (s Server) CreateTransaction(ctx *gin.Context) {
 		return
 	}
 
-	tid, err := s.TransactionService.Create(fid, filePath)
+	tid, err := s.TransactionService.Create(fid, filePath, currentTime)
 	if err != nil {
 		NewServerError(err).Send(ctx)
 		return

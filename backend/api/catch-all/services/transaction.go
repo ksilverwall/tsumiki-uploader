@@ -4,6 +4,7 @@ import (
 	"catch-all/models"
 	"catch-all/repositories"
 	"fmt"
+	"time"
 )
 
 type Transaction struct {
@@ -22,7 +23,7 @@ func (s *Transaction) Get(id models.TransactionID) (models.Transaction, error) {
 	return t, nil
 }
 
-func (s *Transaction) Create(fid models.FileID, filePath string) (models.TransactionID, error) {
+func (s *Transaction) Create(fid models.FileID, filePath string, currentTime time.Time) (models.TransactionID, error) {
 	id, err := GenerateID()
 	tid := models.TransactionID(id)
 	if err != nil {
@@ -30,10 +31,14 @@ func (s *Transaction) Create(fid models.FileID, filePath string) (models.Transac
 		return models.TransactionID(""), ErrUnexpected
 	}
 
-	err = s.TransactionRepository.Put(tid, models.Transaction{
-		FileID:   fid,
-		FilePath: filePath,
-	})
+	err = s.TransactionRepository.Put(
+		tid,
+		models.Transaction{
+			FileID:   fid,
+			FilePath: filePath,
+		},
+		currentTime,
+	)
 	if err != nil {
 		ErrorLog(fmt.Errorf("failed to push transaction: %w", err).Error())
 		return models.TransactionID(""), ErrUnexpected

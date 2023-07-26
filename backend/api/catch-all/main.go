@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"time"
 
 	"catch-all/gen/openapi"
 
@@ -71,6 +72,11 @@ func Init(g *GlobalParams) error {
 		return fmt.Errorf("failed to init server: %v", err)
 	}
 
+	g.GinEngine.Use(func(c *gin.Context) {
+		requestTime := time.Now()
+		c.Set("RequestTimeSec", requestTime)
+		c.Next()
+	})
 	openapi.RegisterHandlers(g.GinEngine, server)
 
 	return nil
