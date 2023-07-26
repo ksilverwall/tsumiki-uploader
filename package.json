@@ -9,7 +9,8 @@
     "build": "tsc && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "deploy:dev": "sh platform/deploy_params.sh ./dist dev"
+    "deploy:dev": "sh platform/deploy_params.sh ./dist dev",
+    "deploy:prd": "sh platform/deploy_params.sh ./dist prd"
   },
   "dependencies": {
     "aws-sdk": "^2.1398.0",

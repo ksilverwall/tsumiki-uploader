@@ -4,10 +4,6 @@ Description: Tsunmiki Uploader Platform.IntegrationApi depends on Backend.Api an
 Parameters:
   HostedZoneId:
     Type: String
-  HostedZoneName:
-    Type: String
-  DomainName:
-    Type: String
   ApiDomainName:
     Type: String
 
