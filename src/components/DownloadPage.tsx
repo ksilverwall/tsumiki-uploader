@@ -6,7 +6,7 @@ import ImagePreview from "./ImagePreview";
 const DownloadPage: React.FC<{ context: Context }> = ({ context }) => {
   const location = useLocation();
 
-  const [urls, setUrls] = useState<string[]>([]);
+  const [urls, setUrls] = useState<string[]>();
   const [asyncError, setAsyncError] = useState<unknown>();
 
   const key = useMemo(() => {
@@ -49,7 +49,7 @@ const DownloadPage: React.FC<{ context: Context }> = ({ context }) => {
       {asyncError ? <p>{`${asyncError}`}</p> : null}
       <button onClick={() => downloadAsync(key)}>Download</button>
       {
-        urls.map((u, idx) => (<div key={idx}><ImagePreview src={u} /></div>))
+        urls ? urls.map((u, idx) => (<div key={idx}><ImagePreview src={u} /></div>)) : <p>サムネイルはまだできていません</p>
       }
     </div>
   )
