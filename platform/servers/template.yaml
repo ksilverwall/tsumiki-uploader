@@ -47,22 +47,23 @@ Resources:
     Properties:
       DistributionConfig:
         Comment: CloudFront Distribution
-        Enabled: true
-        ViewerCertificate:
-          AcmCertificateArn: !Ref CertificateArn
-          SslSupportMethod: sni-only
         Origins:
-          - DomainName: "{{resolve:ssm:/app/tsumiki-uploader/platform/storages/frontend/domain-name}}"
-            Id: S3Origin
+          - Id: S3Origin
+            DomainName: "{{resolve:ssm:/app/tsumiki-uploader/platform/storages/frontend/domain-name}}"
             S3OriginConfig:
-              OriginAccessIdentity: ''
+              OriginAccessIdentity: "origin-access-identity/cloudfront/{{resolve:ssm:/app/tsumiki-uploader/platform/storages/frontend/oai}}"
         DefaultCacheBehavior:
           TargetOriginId: S3Origin
           ForwardedValues:
             QueryString: false
           ViewerProtocolPolicy: redirect-to-https
+        Aliases:
+          - ${DomainName}
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          SslSupportMethod: sni-only
         DefaultRootObject: index.html
-        PriceClass: PriceClass_All
+        Enabled: true
 
   #
   # Resolve Name
@@ -71,7 +72,7 @@ Resources:
   DnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneName: !Sub "${HostedZoneName}"
+      HostedZoneId: !Sub "${HostedZoneId}"
       Name: !Sub "${ApiDomainName}."
       Type: A
       AliasTarget:

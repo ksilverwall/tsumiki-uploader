@@ -40,6 +40,28 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
+  #
+  # Permissions
+  #
+
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref AWS::StackName
+
+  ApplicationStorageBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ApplicationStorage
+      PolicyDocument:
+        Statement:
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub "arn:aws:s3:::${ApplicationStorage}/*"
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}"
+
   AccessPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -86,6 +108,13 @@ Resources:
       Name: /app/tsumiki-uploader/platform/storages/frontend/domain-name
       Type: String
       Value: !GetAtt ApplicationStorage.DomainName
+
+  FrontendOAIParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /app/tsumiki-uploader/platform/storages/frontend/oai
+      Type: String
+      Value: !Ref CloudFrontOriginAccessIdentity
 
 Outputs:
   ApplicationStorage:
